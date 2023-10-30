@@ -1,0 +1,38 @@
+{
+  "name": "broadcaster",
+  "version": "0.0.1",
+  "description": "Extension of a Broadcast Channel API. Allows to send messages accross multiple windows (tabs, workers, iframes,...) and detect opened windows.",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "npx tsc",
+    "clean": "npx rimraf ./dist",
+    "prepublish": "npm run clean && npx tsc",
+    "watch": "npx tsc --watch"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/pavelstencl/broadcaster.git"
+  },
+  "keywords": [
+    "broadcast",
+    "channel",
+    "BroadcastChannel",
+    "share",
+    "state",
+    "tabs",
+    "windows",
+    "browser"
+  ],
+  "author": "Pavel Stencl",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/pavelstencl/broadcaster/issues"
+  },
+  "homepage": "https://github.com/pavelstencl/broadcaster/packages/broadcaster#readme",
+  "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^6.7.0",
+		"@typescript-eslint/parser": "^6.7.0",
+    "rimraf": "^5.0.5",
+    "typescript": "^5.2.2"
+  }
+}

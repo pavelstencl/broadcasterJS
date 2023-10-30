@@ -1,0 +1,23 @@
+{
+  "name": "broadcaster-monorepo",
+  "description": "Extension of a Broadcast Channel API. Allows to send messages accross multiple windows (tabs, workers, iframes,...) and detect opened windows.",
+  "author": "Pavel Stencl",
+  "scripts": {
+    "build": "npm run build --workspaces --if-present"
+  },
+  "keywords": [
+    "broadcast",
+    "channel",
+    "BroadcastChannel",
+    "share",
+    "state",
+    "tabs",
+    "windows",
+    "browser"
+  ],
+  "license": "MIT",
+  "workspaces": [
+    "packages/broadcaster",
+    "packages/react-broadcaster"
+  ]
+}
