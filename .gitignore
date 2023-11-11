@@ -1,3 +1,9 @@
+# npm modules
 node_modules
+
+# mac lock file
 .DS_Store
+
+# main
 dist
+coverage
