@@ -1,20 +1,9 @@
 {
+  "extends": "../../tsconfig.json",
   "compilerOptions": {
-    "declaration": true,
-    "esModuleInterop": true,
-    "forceConsistentCasingInFileNames": true,
-    "incremental": true,
-    "module": "commonjs",
-    "outDir": "dist",
-    "skipLibCheck": true,
-    "strict": true,
-    "target": "es5",
+    "outDir": "./dist"
   },
   "include": [
-    "src/index.ts"
-  ],
-  "exclude": [
-    "src/testing-library",
-    "src/**/*.spec.ts"
+    "./src/index.ts"
   ]
 }
