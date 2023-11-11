@@ -1,12 +1,15 @@
 {
   "name": "react-broadcaster",
   "version": "0.0.1",
-  "description": "React implementation of Broadcaster package. Extension of a Broadcast Channel API. Allows to send messages accross multiple windows (tabs, workers, iframes,...) and detect opened windows.",
+  "description": "React implementation of Broadcaster package. Extension of a Broadcast Channel API. Allows to send messages to multiple windows (tabs, workers, iframes,...) and detect opened windows.",
   "main": "dist/index.js",
   "scripts": {
     "build": "npx tsc",
     "clean": "npx rimraf ./dist",
+    "lint": "eslint ./src --fix",
     "prepublish": "npm run clean && npx tsc",
+    "test": "jest",
+    "test-watch": "npm run test -- --watch --coverage",
     "watch": "npx tsc --watch"
   },
   "repository": {
@@ -17,13 +20,17 @@
     "broadcast",
     "channel",
     "BroadcastChannel",
-    "react",
-    "hook",
     "share",
     "state",
     "tabs",
     "windows",
-    "browser"
+    "browser",
+    "workers",
+    "connect",
+    "connection",
+    "cross",
+    "react",
+    "hook"
   ],
   "author": "Pavel Stencl",
   "license": "MIT",
@@ -32,12 +39,8 @@
   },
   "homepage": "https://github.com/pavelstencl/broadcaster/packages/react-broadcaster#readme",
   "devDependencies": {
-    "@typescript-eslint/eslint-plugin": "^6.7.0",
-		"@typescript-eslint/parser": "^6.7.0",
     "react": "^18.2.0",
-    "react-dom": "^18.2.0",
-    "rimraf": "^5.0.5",
-    "typescript": "^5.2.2"
+    "react-dom": "^18.2.0"
   },
   "peerDependencies": {
     "react": "^18.2.0",
