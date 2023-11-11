@@ -1,0 +1,222 @@
+{
+    "env": {
+        "browser": true,
+        "es2021": true
+    },
+    "extends": [
+        "eslint:recommended",
+        "plugin:@typescript-eslint/eslint-recommended",
+        "plugin:@typescript-eslint/recommended"
+    ],
+    "parser": "@typescript-eslint/parser",
+    "parserOptions": {
+        "ecmaVersion": "latest",
+        "sourceType": "module"
+    },
+    "plugins": [
+        "@typescript-eslint",
+        "typescript-sort-keys"
+    ],
+    "rules": {
+        // disable eslint rules in favor of TS version
+        "indent": "off",
+        "default-param-last": "off",
+
+        // TS rules
+        "@typescript-eslint/ban-ts-comment": "error",
+        "@typescript-eslint/ban-tslint-comment": "error",
+        "@typescript-eslint/ban-types": "error",
+        "@typescript-eslint/consistent-type-imports": "error",
+        "@typescript-eslint/default-param-last": "error",
+        "@typescript-eslint/explicit-function-return-type": "error",
+        "@typescript-eslint/explicit-member-accessibility": "error",
+        "@typescript-eslint/explicit-module-boundary-types": "error",
+        "@typescript-eslint/indent": ["error"],
+        "@typescript-eslint/member-delimiter-style":[
+            "warn",
+            {
+                "multiline": {
+                    "delimiter": "semi",
+                    "requireLast": true
+                },
+                "singleline": {
+                    "delimiter": "semi",
+                    "requireLast": true
+                }
+            }
+        ],
+        "@typescript-eslint/no-unused-vars": [
+            "warn", // or error
+            {
+                "argsIgnorePattern": "^_$",
+                "varsIgnorePattern": "^_$",
+                "caughtErrorsIgnorePattern": "^_$"
+            }
+        ],
+        "@typescript-eslint/type-annotation-spacing":[
+            "warn",
+            {
+                "before": false,
+                "after": true,
+                "overrides": {
+                    "arrow": {
+                        "before": true,
+                        "after": true
+                    },
+                    "variable": {
+                        "before": false,
+                        "after": false
+                    }
+                }
+            }
+        ],
+
+        // sort-keys plugin
+        "typescript-sort-keys/interface": "warn",
+        "typescript-sort-keys/string-enum": "warn",
+
+        // JS rules
+        // deletes spaces in Array around brackets
+        "array-bracket-spacing": [
+            "warn",
+            "never"
+        ],
+        // adds spaces between arrow in arrow function
+        "arrow-spacing": [
+            "warn",
+            {
+                "before": true,
+                "after": true
+            }
+        ],
+        // prevent reading variable which is not reachable by current scope
+        "block-scoped-var": "error",
+        // adds space around brackets in a block
+        "block-spacing": [
+            "warn",
+            "always"
+        ],
+        /**
+         * If else statement formatting
+         * ```js
+         * if (a === "true") {
+         *  //...
+         * }else {
+         *  //...
+         * }
+         * //Will be transformed into:
+         * if (a===true) {
+         *  //...
+         * }
+         * else {
+         *  //...
+         * }
+         * ```
+         */
+         "brace-style": [
+            "warn",
+            "stroustrup"
+        ],
+        "comma-spacing": [
+            "warn",
+            {
+                "before": false,
+                "after": true
+            }
+        ],
+        "comma-style": [
+            "warn",
+            "last"
+        ],
+        "computed-property-spacing": [
+            "warn",
+            "never"
+        ],
+        // rewrites shortened version of block element like if statement to correct one
+        "curly": "warn",
+        "eol-last": "warn",
+        "linebreak-style": [
+            "warn",
+            "unix"
+        ],
+        "lines-between-class-members": "warn",
+        "keyword-spacing": "warn",
+        // disable eval
+        "no-eval": "error",
+        // rewrites decimal number in format `.1` to `0.1`
+        "no-floating-decimal": "warn",
+        "no-multiple-empty-lines": "warn",
+        "no-trailing-spaces": "warn",
+        "no-whitespace-before-property": "warn",
+        // adds empty line before and after any block statement
+        "padding-line-between-statements": [
+            "warn",
+            {
+                "blankLine": "always",
+                "prev": "*",
+                "next": [
+                    "block-like",
+                    "return"
+                ]
+            },
+            {
+                "blankLine": "always",
+                "prev": "block-like",
+                "next": "*"
+            }
+        ],
+        "quotes": [
+            "warn",
+            "double"
+        ],
+         // forces to write semi everywhere
+         "semi": [
+            "warn",
+            "always"
+        ],
+        "semi-spacing": [
+            "warn",
+            {
+                "before": false,
+                "after": true
+            }
+        ],
+        "space-before-blocks": [
+            "warn",
+            {
+                "functions": "always",
+                "keywords": "always",
+                "classes": "always"
+            }
+        ],
+        "space-in-parens": [
+            "warn",
+            "never"
+        ],
+        "space-infix-ops": "warn",
+        "spaced-comment": [
+            "warn",
+            "always",
+            {
+                "line": {
+                    "markers": [
+                        "/"
+                    ],
+                    "exceptions": [
+                        "-",
+                        "+"
+                    ]
+                },
+                "block": {
+                    "markers": [
+                        "!"
+                    ],
+                    "exceptions": [
+                        "*"
+                    ],
+                    "balanced": true
+                }
+            }
+        ]
+    }
+}
