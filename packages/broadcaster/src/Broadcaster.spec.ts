@@ -1,7 +1,8 @@
+import { MockBridge } from "testing-tools";
+
 import { Broadcaster } from "./Broadcaster";
 import type { BroadcasterError } from "./utils/Errors";
 import { BroadcasterContentTypeMismatchError } from "./utils/Errors";
-import { MockBridge } from "./testing-library/BridgeMocker";
 import type { GenericBroadcasterAttributes, BroadcasterMessage, BroadcasterSettings, BroadcasterInstanceDescriptor } from "./types";
 
 // CONFIG ---------------------------------

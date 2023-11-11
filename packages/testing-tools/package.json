@@ -1,0 +1,19 @@
+{
+  "name": "testing-tools",
+  "version": "0.0.1",
+  "private": true,
+  "main": "./src",
+  "scripts": {
+    "lint": "eslint ./src --fix"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/pavelstencl/broadcaster.git"
+  },
+  "author": "Pavel Stencl",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/pavelstencl/broadcaster/issues"
+  },
+  "homepage": "https://github.com/pavelstencl/broadcaster/tree/main/packages/broadcaster"
+}

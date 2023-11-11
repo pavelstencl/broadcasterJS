@@ -1,8 +1,8 @@
-import { BroadcasterBridge } from "../bridges/Bridge";
-import { BroadcasterSubscription } from "../subscription/Subscription";
+import { BroadcasterBridge } from "broadcaster/src/bridges/Bridge";
+import { BroadcasterSubscription } from "broadcaster/src/subscription/Subscription";
 
-import { type BroadcasterError } from "../utils/Errors";
-import type { BroadcasterMessage, BroadcasterStateMessage } from "../types";
+import { type BroadcasterError } from "broadcaster/src/utils/Errors";
+import type { BroadcasterMessage, BroadcasterStateMessage } from "broadcaster/src/types";
 
 enum MessageTypes {
     PUBLIC_MESSAGE,
