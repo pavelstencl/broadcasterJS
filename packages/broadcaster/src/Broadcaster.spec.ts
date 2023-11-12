@@ -260,3 +260,38 @@ describe("Broadcaster state management tests", () => {
         ).toStrictEqual(newState);
     });
 });
+
+describe("Broadcaster lifecycle events", () => {
+    const event = jest.fn<undefined, [
+        Broadcaster<GenericBroadcasterAttributes>,
+    ]>(() => undefined);
+
+    beforeEach(() => {
+        MockBridge.reset();
+        event.mockReset();
+    });
+
+    it("triggers init event", () => {
+        const [instance] = createInstances(1, {
+            on: {
+                init: event,
+            }
+        });
+
+        expect(event.mock.calls.length).toBe(1);
+        expect(event.mock.calls[0][0]).toBe(instance);
+    });
+
+    it("triggers close event", () => {
+        const [instance] = createInstances(1, {
+            on: {
+                close: event,
+            }
+        });
+
+        instance.close();
+
+        expect(event.mock.calls.length).toBe(1);
+        expect(event.mock.calls[0][0]).toBe(instance);
+    });
+});

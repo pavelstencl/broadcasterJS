@@ -97,6 +97,8 @@ export class Broadcaster<Settings extends GenericBroadcasterAttributes> {
             return;
         }
 
+        this.settings.on?.close?.(this as unknown as Broadcaster<GenericBroadcasterAttributes>);
+
         this.bridge.setState(this.prepareStateMessage(StateMessageType.DISCONNECTED));
 
         this.subscriptionManager.close();
@@ -130,6 +132,7 @@ export class Broadcaster<Settings extends GenericBroadcasterAttributes> {
     }
 
     private init(): void {
+        this.settings.on?.init?.(this as unknown as Broadcaster<GenericBroadcasterAttributes>);
         this.bridge.setState(this.prepareStateMessage(StateMessageType.CONNECTED));
     }
 

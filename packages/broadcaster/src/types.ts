@@ -1,3 +1,4 @@
+import type { Broadcaster } from "./Broadcaster";
 import type { BroadcasterBridge } from "./bridges/Bridge";
 
 /**
@@ -98,6 +99,26 @@ export type BroadcasterSettings<Payload = unknown, State = unknown, PayloadTrans
          */
         before: (message: Payload) => PayloadTransformer;
     };
+
+    /**
+     * Lifecycle events
+     */
+    on?: Partial<{
+        /**
+         * Called before Broadcaster is destroyed.
+         *
+         * @param broadcaster
+         * @returns
+         */
+        close: (broadcaster: Broadcaster<GenericBroadcasterAttributes>) => void;
+        /**
+         * Called right after broadcaster initialization
+         *
+         * @param broadcaster
+         * @returns
+         */
+        init: (broadcaster: Broadcaster<GenericBroadcasterAttributes>) => void;
+    }>;
 }
 
 /**
