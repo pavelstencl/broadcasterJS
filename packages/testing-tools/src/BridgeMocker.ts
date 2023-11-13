@@ -2,7 +2,6 @@ import { BroadcasterBridge } from "broadcaster/src/bridges/Bridge";
 import { BroadcasterSubscription } from "broadcaster/src/subscription/Subscription";
 
 import { type BroadcasterError } from "broadcaster/src/utils/Errors";
-import type { BroadcasterMessage, BroadcasterStateMessage } from "broadcaster/src/types";
 
 enum MessageTypes {
     PUBLIC_MESSAGE,
@@ -24,7 +23,7 @@ type SerializedPrivateMessage<M> = SerializedMessage<M, MessageTypes.PRIVATE_MES
  * IMPORTANT!: This Bridge is for testing purposes of Broadcaster class only!
  */
 export class MockBridge<
-    Payload extends BroadcasterMessage<unknown>,
+    Payload,
     State,
 > extends BroadcasterBridge<Payload, State> {
     private static subscriber = new BroadcasterSubscription<[
@@ -78,7 +77,7 @@ export class MockBridge<
         return false;
     }
 
-    private isPrivateMessage(data: unknown): data is SerializedPrivateMessage<BroadcasterStateMessage<State>> {
+    private isPrivateMessage(data: unknown): data is SerializedPrivateMessage<State> {
         return this.isMessage(data) && data.type === MessageTypes.PRIVATE_MESSAGE;
     }
 
@@ -95,8 +94,8 @@ export class MockBridge<
         MockBridge.subscriber.next(message);
     }
 
-    public setState(payload: BroadcasterStateMessage<State>): void {
-        const message:SerializedPrivateMessage<BroadcasterStateMessage<State>> = {
+    public setState(payload: State): void {
+        const message:SerializedPrivateMessage<State> = {
             payload,
             type: MessageTypes.PRIVATE_MESSAGE,
         };
