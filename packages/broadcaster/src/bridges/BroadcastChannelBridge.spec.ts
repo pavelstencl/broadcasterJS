@@ -1,5 +1,5 @@
 
-import type { BroadcasterMessage } from "../types";
+import type { BroadcasterMessage, BroadcasterStateMessage } from "../types";
 import { BroadcastChannelBridge } from "./BroadcastChannelBridge";
 
 /**
@@ -11,10 +11,10 @@ import { BroadcastChannelBridge } from "./BroadcastChannelBridge";
 const createInstance = (
     amount: number,
     channel?: string
-): BroadcastChannelBridge<BroadcasterMessage<string>, unknown>[] => new Array(amount)
+): BroadcastChannelBridge<BroadcasterMessage<string>, BroadcasterStateMessage<unknown>>[] => new Array(amount)
     .fill(0)
     .map(() => {
-        const bridge = new BroadcastChannelBridge<BroadcasterMessage<string>, unknown>();
+        const bridge = new BroadcastChannelBridge<BroadcasterMessage<string>, BroadcasterStateMessage<unknown>>();
         bridge.connect(channel || "CHANNEL");
 
         return bridge;
@@ -22,7 +22,7 @@ const createInstance = (
 
 describe("BroadcastChannel Bridge tests", () => {
     const result = jest.fn();
-    let instances:BroadcastChannelBridge<BroadcasterMessage<string>, unknown>[] = [];
+    let instances:BroadcastChannelBridge<BroadcasterMessage<string>, BroadcasterStateMessage<unknown>>[] = [];
 
     afterEach(() => {
         instances.map((bridge) => bridge.destroy());
@@ -51,7 +51,6 @@ describe("BroadcastChannel Bridge tests", () => {
 
         instances[0].postMessage({
             from: "1",
-            metadata: {},
             payload: message,
         });
     });

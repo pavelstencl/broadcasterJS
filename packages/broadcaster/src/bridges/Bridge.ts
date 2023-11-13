@@ -1,5 +1,4 @@
 import type { BroadcasterError } from "../utils/Errors";
-import type { BroadcasterMessage, BroadcasterStateMessage } from "../types";
 
 /**
  * Subscriptions catalogue used by Broadcaster to subscribe to a bridge
@@ -31,12 +30,12 @@ type BroadcasterBridgeSubscriptions<Payload, State> = {
  *
  * @private
  */
-export abstract class BroadcasterBridge<Payload extends BroadcasterMessage<unknown>, State> {
+export abstract class BroadcasterBridge<Payload, State> {
 
     /**
      * Message, state and error subscriptions.
      */
-    private subscriptions: BroadcasterBridgeSubscriptions<Payload, BroadcasterStateMessage<State>> = {};
+    private subscriptions: BroadcasterBridgeSubscriptions<Payload, State> = {};
 
     /**
      * Called when connection to a stream is required
@@ -88,7 +87,7 @@ export abstract class BroadcasterBridge<Payload extends BroadcasterMessage<unkno
      *
      * @param state
      */
-    protected readonly pushState = (state: BroadcasterStateMessage<State>): void => {
+    protected readonly pushState = (state: State): void => {
         this.subscriptions.state?.(state);
     };
 
@@ -97,14 +96,14 @@ export abstract class BroadcasterBridge<Payload extends BroadcasterMessage<unkno
      *
      * @param state
      */
-    public abstract setState(state: BroadcasterStateMessage<State>): void;
+    public abstract setState(state: State): void;
 
     /**
      * Subscribes to a message, state and error stream.
      *
      * @param subscriptions catalogue of all subscriptions
      */
-    public subscribe(subscriptions: BroadcasterBridgeSubscriptions<Payload, BroadcasterStateMessage<State>>): void {
+    public subscribe(subscriptions: typeof this.subscriptions): void {
         this.subscriptions = subscriptions;
     }
 }

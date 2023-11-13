@@ -26,16 +26,15 @@ export type BroadcasterInstanceDescriptor<State> = {
  *
  * @public
  */
-export type BroadcasterMessage<Payload, Metadata extends Record<string, unknown> = Record<string, unknown>> = {
+export type BroadcasterMessage<Payload> = {
     from: string;
-    metadata: Metadata;
     payload: Payload;
 };
 
 /**
  * Message received from other broadcaster.
  *
- * @private
+ * @public
  */
 export type BroadcasterStateMessage<State> = {
     /**
@@ -61,23 +60,21 @@ export type BroadcasterStateMessage<State> = {
  *
  * @public
  */
-export type BroadcasterSettings<Payload = unknown, State = unknown, PayloadTransformer = unknown> = {
+export type BroadcasterSettings<Payload, State> = {
     /**
      * Replaces default BroadcasterBridge. Allows to use communication layer other then
      * BroadcasterChannel API (for example WebSocket layer).
      *
      * @default BroadcastChannelBridge
      */
-    bridge?: BroadcasterBridge<BroadcasterMessage<Payload>, State>;
+    bridge?: BroadcasterBridge<BroadcasterMessage<Payload>, BroadcasterStateMessage<State>>;
 
     /**
      * Unique channel name, which will be used as a communication key
      */
     channel: string;
 
-    defaultMetadata?: Record<string, unknown>;
-
-    defaultState?: State;
+    defaultState: State;
 
     /**
      * Middleware allowing to transform a message
@@ -89,7 +86,7 @@ export type BroadcasterSettings<Payload = unknown, State = unknown, PayloadTrans
          * @param message
          * @returns
          */
-        after: (message: PayloadTransformer) => Payload;
+        after: (message: unknown) => Payload;
 
         /**
          * Allows to modify outgoing message.
@@ -97,7 +94,7 @@ export type BroadcasterSettings<Payload = unknown, State = unknown, PayloadTrans
          * @param message
          * @returns
          */
-        before: (message: Payload) => PayloadTransformer;
+        before: (message: Payload) => unknown;
     };
 
     /**
@@ -110,14 +107,14 @@ export type BroadcasterSettings<Payload = unknown, State = unknown, PayloadTrans
          * @param broadcaster
          * @returns
          */
-        close: (broadcaster: Broadcaster<GenericBroadcasterAttributes>) => void;
+        close: (broadcaster: Broadcaster<Payload, State>) => void;
         /**
          * Called right after broadcaster initialization
          *
          * @param broadcaster
          * @returns
          */
-        init: (broadcaster: Broadcaster<GenericBroadcasterAttributes>) => void;
+        init: (broadcaster: Broadcaster<Payload, State>) => void;
     }>;
 }
 
@@ -127,10 +124,6 @@ export type BroadcasterSettings<Payload = unknown, State = unknown, PayloadTrans
  * @public
  */
 export type GenericBroadcasterAttributes = {
-    /**
-     * Metadata data type packed with every message
-     */
-    metadata?: Record<string, unknown>;
     /**
      * Type definition of data payload
      */

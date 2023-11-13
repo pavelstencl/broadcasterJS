@@ -8,7 +8,6 @@ import { generateId } from "./utils/generateId";
 import type { BroadcasterBridge } from "./bridges/Bridge";
 import type { BroadcasterError } from "./utils/Errors";
 import type {
-    GenericBroadcasterAttributes,
     BroadcasterMessage,
     BroadcasterSettings,
     BroadcasterInstanceDescriptor,
@@ -24,16 +23,16 @@ import type {
  * remote counterparts.
  * ____
  */
-export class Broadcaster<Settings extends GenericBroadcasterAttributes> {
+export class Broadcaster<Payload, State> {
     /**
      * All active Broadcaster instances
      */
-    private broadcasters: BroadcasterInstanceDescriptor<Settings["state"]>[] = [];
+    private broadcasters: BroadcasterInstanceDescriptor<State>[] = [];
 
     /**
      * Instance of a communication bridge (BroadcasterChannel, WebSockets, etc..)
      */
-    private bridge: BroadcasterBridge<BroadcasterMessage<Settings["payload"]>, Settings["state"]>;
+    private bridge: BroadcasterBridge<BroadcasterMessage<Payload>, BroadcasterStateMessage<State>>;
 
     public readonly createdAt = Date.now();
 
@@ -52,31 +51,26 @@ export class Broadcaster<Settings extends GenericBroadcasterAttributes> {
      */
     public readonly id = generateId();
 
-    /**
-     * Custom metadata about this instance of a Broadcaster
-     */
-    private currentMetadata: BroadcasterSettings<Settings["payload"]>["defaultMetadata"];
-
-    private currentState: Settings["state"] = {};
+    private currentState: State;
 
     /**
      * Keeps stored all subscriptions
      */
     private subscriptionManager = new BroadcasterSubscription<[
-        DeepReadonly<BroadcasterMessage<Settings["payload"]>> | null,
+        DeepReadonly<BroadcasterMessage<Payload>> | null,
         BroadcasterError | null,
     ]>();
 
     private state = new BroadcasterSubscription<[
-        BroadcasterInstanceDescriptor<Settings["state"]>[],
+        BroadcasterInstanceDescriptor<State>[],
     ]>(true);
 
-    public constructor(private settings: BroadcasterSettings<Settings["payload"]>) {
-        const { bridge, channel, defaultMetadata: metadata} = this.settings;
+    public constructor(private settings: BroadcasterSettings<Payload, State>) {
+        const { bridge, channel, defaultState} = this.settings;
 
         this.channel = channel;
         this.bridge = bridge || new BroadcastChannelBridge();
-        this.currentMetadata = metadata || {};
+        this.currentState = defaultState;
 
         this.bridge.subscribe({
             messages: this.pushMessage,
@@ -97,7 +91,7 @@ export class Broadcaster<Settings extends GenericBroadcasterAttributes> {
             return;
         }
 
-        this.settings.on?.close?.(this as unknown as Broadcaster<GenericBroadcasterAttributes>);
+        this.settings.on?.close?.(this as unknown as Broadcaster<Payload, State>);
 
         this.bridge.setState(this.prepareStateMessage(StateMessageType.DISCONNECTED));
 
@@ -132,7 +126,7 @@ export class Broadcaster<Settings extends GenericBroadcasterAttributes> {
     }
 
     private init(): void {
-        this.settings.on?.init?.(this as unknown as Broadcaster<GenericBroadcasterAttributes>);
+        this.settings.on?.init?.(this as unknown as Broadcaster<Payload, State>);
         this.bridge.setState(this.prepareStateMessage(StateMessageType.CONNECTED));
     }
 
@@ -141,13 +135,6 @@ export class Broadcaster<Settings extends GenericBroadcasterAttributes> {
      */
     public get isClosed(): boolean {
         return this.closed;
-    }
-
-    /**
-     * Current metadata state
-     */
-    public get metadata(): DeepReadonly<Settings["metadata"]> {
-        return this.metadata;
     }
 
     /**
@@ -171,7 +158,7 @@ export class Broadcaster<Settings extends GenericBroadcasterAttributes> {
      *
      * @param payload message payload
      */
-    public postMessage(payload: Settings["payload"]): void {
+    public postMessage(payload: Payload): void {
         if (!this.isBroadcasterActive("postMessage")) {
             return;
         }
@@ -180,8 +167,7 @@ export class Broadcaster<Settings extends GenericBroadcasterAttributes> {
 
         this.bridge.postMessage({
             from: this.id,
-            payload: applyMiddleware ? applyMiddleware(payload) : payload,
-            metadata: this.currentMetadata || {},
+            payload: applyMiddleware ? (applyMiddleware(payload) as Payload) : payload,
         });
     }
 
@@ -192,7 +178,7 @@ export class Broadcaster<Settings extends GenericBroadcasterAttributes> {
      * @param to message receiver id
      * @returns
      */
-    private prepareStateMessage(type: StateMessageType, to?: string): BroadcasterStateMessage<Settings["state"]> {
+    private prepareStateMessage(type: StateMessageType, to?: string): BroadcasterStateMessage<State> {
         return {
             type: type,
             from: this.id,
@@ -219,7 +205,7 @@ export class Broadcaster<Settings extends GenericBroadcasterAttributes> {
      *
      * @param param0 raw bridge message
      */
-    private pushMessage = (data: BroadcasterMessage<Settings["payload"]>): void => {
+    private pushMessage = (data: BroadcasterMessage<Payload>): void => {
         const {payload, from} = data;
 
         // filter all messages, where message owner is current instance
@@ -232,39 +218,11 @@ export class Broadcaster<Settings extends GenericBroadcasterAttributes> {
                     payload: applyMiddleware ?
                         applyMiddleware(payload) :
                         payload
-                } as DeepReadonly<BroadcasterMessage<Settings["payload"]>>,
+                } as DeepReadonly<BroadcasterMessage<Payload>>,
                 null,
             );
         }
     };
-
-    /**
-     * Changes metadata.
-     * Metadata change will propagate with next Broadcaster message only!
-     *
-     * ____
-     *
-     * @example```ts
-     * // override metadata
-     * broadcasterInstance.setMetadata({name: "John"});
-     * // update metadata
-     * broadcasterInstance.setMetadata((current) => ({...current, lastName: "Doe"}));
-     *
-     * // changed metadata will be provided with next message
-     * broadcasterInstance.postMessage("New Message!");
-     * ```
-     * @param metadata data to override or a method with current metadata as an attribute
-     */
-    public setMetadata(
-        metadata: Settings["metadata"] | ((current: Settings["metadata"]) =>  Settings["metadata"])
-    ): void {
-        if (typeof metadata === "function") {
-            this.currentMetadata = metadata(this.currentMetadata);
-        }
-        else {
-            this.currentMetadata = metadata;
-        }
-    }
 
     /**
      * Changes broadcasters state.
@@ -283,10 +241,10 @@ export class Broadcaster<Settings extends GenericBroadcasterAttributes> {
      * @param newState data to override or a method with current state as an attribute
      */
     public setState(
-        newState: Settings["state"] | ((current: Settings["state"]) => Settings["state"])
+        newState: State | ((current: State) => State)
     ): void {
         if (typeof newState === "function") {
-            this.currentState = newState(this.currentState);
+            this.currentState = (newState as ((current: State) => State))(this.currentState);
         }
         else {
             this.currentState = newState;
@@ -344,7 +302,7 @@ export class Broadcaster<Settings extends GenericBroadcasterAttributes> {
         state: this.state.unsubscribe,
     };
 
-    private updateState = (data: BroadcasterStateMessage<Settings["state"]>): void => {
+    private updateState = (data: BroadcasterStateMessage<State>): void => {
         if (data.to && data.to !== this.id) {
             return;
         }

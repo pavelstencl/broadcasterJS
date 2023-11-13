@@ -3,31 +3,25 @@ import { MockBridge } from "testing-tools";
 import { Broadcaster } from "./Broadcaster";
 import type { BroadcasterError } from "./utils/Errors";
 import { BroadcasterContentTypeMismatchError } from "./utils/Errors";
-import type { GenericBroadcasterAttributes, BroadcasterMessage, BroadcasterSettings, BroadcasterInstanceDescriptor } from "./types";
+import type { BroadcasterMessage, BroadcasterSettings, BroadcasterInstanceDescriptor } from "./types";
 
 // CONFIG ---------------------------------
 
 const CHANNEL = "CHANNEL";
 
-type SimpleBroadcasterSettings = {
-    metadata: Record<string, string>;
-    payload: Record<string, string>;
-    state: Record<string, unknown>;
-}
-
-const createInstances = <T extends GenericBroadcasterAttributes = SimpleBroadcasterSettings>(
+const createInstances = <Payload, State extends Record<string, unknown>>(
     amount: number,
-    settings?: Partial<BroadcasterSettings<T["payload"]>>
-): Broadcaster<T>[] => new Array(amount)
+    settings?: Partial<BroadcasterSettings<Payload, State>>
+): Broadcaster<Payload, State>[] => new Array(amount)
     .fill(0)
     .map((_, i) => (
-        new Broadcaster<T>({
+        new Broadcaster<Payload, State>({
             // use testing bridge instead of BroadcastChannelBridge
             bridge: new MockBridge(),
             channel: CHANNEL,
-            defaultMetadata: {
+            defaultState: {
                 instanceID: i + 1,
-            },
+            } as unknown as State,
             ...settings,
         })
     ));
@@ -54,15 +48,6 @@ describe("Broadcaster messaging tests", () => {
 
         expect(result.mock.calls).toHaveLength(1);
         expect(result.mock.calls[0][0]?.payload).toStrictEqual(message);
-    });
-
-    it("sends custom metadata about owner", () => {
-        const [instance1, instance2] = createInstances(2);
-
-        instance1.subscribe.message(result);
-        instance2.postMessage({message: "Any Message"});
-
-        expect(result.mock.calls[0][0]?.metadata?.instanceID).toBe(2);
     });
 
     it("unsubscribes from broadcaster", () => {
@@ -132,7 +117,7 @@ describe("Broadcaster messaging tests", () => {
 
         const message = "Hello World";
 
-        const [instance1, instance2] = createInstances<{payload: Message; state: Record<string, unknown>;}>(2, {
+        const [instance1, instance2] = createInstances<Message,  Record<string, unknown>>(2, {
             middlewares: {
                 // method transforming a message before sending
                 before: (payload) => {
@@ -175,26 +160,6 @@ describe("Broadcaster messaging tests", () => {
         // return original method
         console.error = originalMethod;
     });
-
-    it("changes metadata and sends it packed with a message", () => {
-        const [instance1, instance2] = createInstances(2);
-        instance2.subscribe.message(result);
-        const name = "John";
-        const lastName = "Doe";
-
-        // override metadata
-        instance1.setMetadata({ name });
-        instance1.postMessage({ message: "Hello World" });
-
-        expect((result.mock.calls[0][0]?.metadata as Record<string, unknown>).name).toBe(name);
-
-        // update metadata
-        instance1.setMetadata((current) => ({...current, lastName}));
-        instance1.postMessage({ message: "Hello World" });
-
-        expect((result.mock.calls[1][0]?.metadata as Record<string, unknown>).name).toBe(name);
-        expect((result.mock.calls[1][0]?.metadata as Record<string, unknown>).lastName).toBe(lastName);
-    });
 });
 
 describe("Broadcaster state management tests", () => {
@@ -208,7 +173,7 @@ describe("Broadcaster state management tests", () => {
     });
 
     it("connects two instances and syncs their state data", () => {
-        const [instance1, instance2] = createInstances(2);
+        const [instance1, instance2] = createInstances<unknown, Record<string, unknown>>(2);
 
         instance1.subscribe.state(result);
         instance2.subscribe.state(result);
@@ -220,7 +185,7 @@ describe("Broadcaster state management tests", () => {
     });
 
     it("synchronizes state, when new broadcaster connects", () => {
-        const [instance1] = createInstances(2);
+        const [instance1] = createInstances<unknown, Record<string, unknown>>(2);
 
         instance1.subscribe.state(result);
 
@@ -231,7 +196,7 @@ describe("Broadcaster state management tests", () => {
     });
 
     it("removes broadcaster instance and notifies others", () => {
-        const [instance1, instance2] = createInstances(2);
+        const [instance1, instance2] = createInstances<unknown, Record<string, unknown>>(2);
 
         instance1.subscribe.state(result);
 
@@ -243,7 +208,7 @@ describe("Broadcaster state management tests", () => {
     });
 
     it("updates broadcaster state and notifies other about change", () => {
-        const [instance1, instance2] = createInstances(2);
+        const [instance1, instance2] = createInstances<unknown, Record<string, unknown>>(2);
         const newState = {
             name: "John Doe"
         };
@@ -263,7 +228,7 @@ describe("Broadcaster state management tests", () => {
 
 describe("Broadcaster lifecycle events", () => {
     const event = jest.fn<undefined, [
-        Broadcaster<GenericBroadcasterAttributes>,
+        Broadcaster<unknown, Record<string, unknown>>,
     ]>(() => undefined);
 
     beforeEach(() => {
