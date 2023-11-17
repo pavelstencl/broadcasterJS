@@ -1,5 +1,5 @@
 
-import type { BroadcasterMessage, BroadcasterStateMessage } from "../types";
+import { BroadcasterMessage, BroadcasterStateMessage } from "../types";
 import { BroadcastChannelBridge } from "./BroadcastChannelBridge";
 
 /**

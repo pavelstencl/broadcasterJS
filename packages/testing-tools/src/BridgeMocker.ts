@@ -1,7 +1,7 @@
-import { BroadcasterBridge } from "broadcaster/src/bridges/Bridge";
-import { BroadcasterSubscription } from "broadcaster/src/subscription/Subscription";
+import { BroadcasterBridge } from "@broadcaster/core/src/bridges/Bridge";
+import { BroadcasterSubscription } from "@broadcaster/core/src/subscription/Subscription";
 
-import { type BroadcasterError } from "broadcaster/src/utils/Errors";
+import { BroadcasterError } from "@broadcaster/core/src/utils/Errors";
 
 enum MessageTypes {
     PUBLIC_MESSAGE,

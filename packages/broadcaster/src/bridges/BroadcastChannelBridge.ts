@@ -1,6 +1,6 @@
 import { BroadcasterBridge } from "./Bridge";
 import { BroadcasterContentTypeMismatchError } from "../utils/Errors";
-import type { BroadcasterMessage, BroadcasterStateMessage } from "../types";
+import { BroadcasterMessage, BroadcasterStateMessage } from "../types";
 
 enum MessageTypes {
     MESSAGE,

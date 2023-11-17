@@ -1,5 +1,5 @@
-import type { Broadcaster } from "./Broadcaster";
-import type { BroadcasterBridge } from "./bridges/Bridge";
+import { Broadcaster } from "./Broadcaster";
+import { BroadcasterBridge } from "./bridges/Bridge";
 
 /**
  * Basic info about remote broadcaster instance

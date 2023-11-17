@@ -1,4 +1,4 @@
-import type { BroadcasterError } from "../utils/Errors";
+import { BroadcasterError } from "../utils/Errors";
 
 /**
  * Subscriptions catalogue used by Broadcaster to subscribe to a bridge

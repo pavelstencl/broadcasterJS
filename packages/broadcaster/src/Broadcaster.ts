@@ -1,13 +1,13 @@
-import type { DeepReadonly } from "utility-types";
+import { DeepReadonly } from "utility-types";
 
 import { BroadcasterSubscription } from "./subscription/Subscription";
 import { StateMessageType } from "./types";
 import { BroadcastChannelBridge } from "./bridges/BroadcastChannelBridge";
 import { generateId } from "./utils/generateId";
 
-import type { BroadcasterBridge } from "./bridges/Bridge";
-import type { BroadcasterError } from "./utils/Errors";
-import type {
+import { BroadcasterBridge } from "./bridges/Bridge";
+import { BroadcasterError } from "./utils/Errors";
+import {
     BroadcasterMessage,
     BroadcasterSettings,
     BroadcasterInstanceDescriptor,
@@ -62,7 +62,7 @@ export class Broadcaster<Payload, State> {
     ]>();
 
     private state = new BroadcasterSubscription<[
-        BroadcasterInstanceDescriptor<State>[],
+        DeepReadonly<BroadcasterInstanceDescriptor<State>[]>,
     ]>(true);
 
     public constructor(private settings: BroadcasterSettings<Payload, State>) {
@@ -331,6 +331,6 @@ export class Broadcaster<Payload, State> {
             return;
         }
 
-        this.state.next([...this.broadcasters]);
+        this.state.next([...this.broadcasters] as DeepReadonly<BroadcasterInstanceDescriptor<State>[]>);
     };
 }

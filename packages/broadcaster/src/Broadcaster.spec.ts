@@ -1,9 +1,9 @@
 import { MockBridge } from "testing-tools";
+import { DeepReadonly } from "utility-types";
 
 import { Broadcaster } from "./Broadcaster";
-import type { BroadcasterError } from "./utils/Errors";
-import { BroadcasterContentTypeMismatchError } from "./utils/Errors";
-import type { BroadcasterMessage, BroadcasterSettings, BroadcasterInstanceDescriptor } from "./types";
+import { BroadcasterContentTypeMismatchError, BroadcasterError } from "./utils/Errors";
+import { BroadcasterMessage, BroadcasterSettings, BroadcasterInstanceDescriptor } from "./types";
 
 // CONFIG ---------------------------------
 
@@ -164,7 +164,7 @@ describe("Broadcaster messaging tests", () => {
 
 describe("Broadcaster state management tests", () => {
     const result = jest.fn<undefined, [
-        BroadcasterInstanceDescriptor<Record<string, unknown>>[],
+        DeepReadonly<BroadcasterInstanceDescriptor<Record<string, unknown>>[]>,
     ]>(() => undefined);
 
     beforeEach(() => {
