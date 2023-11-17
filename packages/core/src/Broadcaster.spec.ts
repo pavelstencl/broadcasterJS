@@ -1,4 +1,4 @@
-import { MockBridge } from "testing-tools";
+import { MockBridge } from "@broadcaster/testing-tools";
 import { DeepReadonly } from "utility-types";
 
 import { Broadcaster } from "./Broadcaster";

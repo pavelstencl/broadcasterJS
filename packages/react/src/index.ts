@@ -1,4 +1,4 @@
-import { Broadcaster, BroadcasterSettings } from "@broadcaster/core";
+import { Broadcaster, BroadcasterSettings } from "../../core/dist";
 
 import { ReactBroadcasterFactoryReturnType } from "./types";
 import { createUseBroadcaster } from "./hooks/useBroadcaster";
@@ -74,4 +74,4 @@ export const createBroadcaster = <Payload, State>(
     };
 };
 
-export * from "@broadcaster/core";
+export * from "../../core/dist";

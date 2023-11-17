@@ -1,5 +1,5 @@
 {
-  "name": "testing-tools",
+  "name": "@broadcaster/testing-tools",
   "version": "0.0.1",
   "private": true,
   "main": "./src",
