@@ -4,9 +4,9 @@
   "author": "Pavel Stencl",
   "private": true,
   "scripts": {
-    "build": "npm run build --workspaces --if-present",
-    "lint": "npm run lint --workspaces --if-present",
-    "test": "npm run test --workspaces --if-present"
+    "build": "lerna run build",
+    "lint": "lerna run lint",
+    "test": "lerna run test"
   },
   "keywords": [
     "broadcast",
