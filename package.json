@@ -24,7 +24,8 @@
   ],
   "license": "MIT",
   "workspaces": [
-    "packages/*"
+    "packages/*",
+    "example"
   ],
   "devDependencies": {
     "@rollup/plugin-commonjs": "^25.0.7",
