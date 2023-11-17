@@ -1,6 +1,6 @@
 import { useLayoutEffect, useState } from "react";
 
-import { Broadcaster, BroadcasterInstanceDescriptor, BroadcasterMessage } from "../../../core/dist";
+import { Broadcaster, BroadcasterInstanceDescriptor, BroadcasterMessage } from "@broadcaster/core";
 import { DeepReadonly } from "utility-types";
 
 export type UseBroadcasterReturnType<Payload, State> = {

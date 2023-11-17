@@ -1,4 +1,4 @@
-import { BroadcasterBridge, BroadcasterMessage, BroadcasterStateMessage } from "../../core/dist";
+import { BroadcasterBridge, BroadcasterMessage, BroadcasterStateMessage } from "@broadcaster/core";
 import { MockBridge } from "@broadcaster/testing-tools";
 import { RenderHookResult, act, renderHook } from "@testing-library/react";
 
