@@ -1,5 +1,5 @@
 {
-  "name": "react-broadcaster",
+  "name": "@broadcaster/react",
   "version": "0.0.1",
   "description": "React implementation of Broadcaster package. Extension of a Broadcast Channel API. Allows to send messages to multiple windows (tabs, workers, iframes,...) and detect opened windows.",
   "main": "dist/index.js",
@@ -39,9 +39,10 @@
   },
   "homepage": "https://github.com/pavelstencl/broadcaster/packages/react-broadcaster#readme",
   "devDependencies": {
+    "@broadcaster/core": "file:../broadcaster",
+    "@types/react": "^18.2.37",
     "react": "^18.0.0",
-    "react-dom": "^18.0.0",
-    "broadcaster": "../broadcaster"
+    "react-dom": "^18.0.0"
   },
   "peerDependencies": {
     "react": "^18.2.0",

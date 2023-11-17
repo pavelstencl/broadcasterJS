@@ -1,5 +1,5 @@
 {
-  "name": "broadcaster",
+  "name": "@broadcaster/core",
   "version": "0.0.1",
   "description": "Cross window state manager based on BroadcastChannel API. Allows to send messages and keep states between browsing contexts (tabs, windows, workers, etc..)",
   "main": "dist/index.js",

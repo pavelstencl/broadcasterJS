@@ -5,16 +5,19 @@
     "forceConsistentCasingInFileNames": true,
     "incremental": true,
     "module": "commonjs",
-    "noLib": false,
     "outDir": "dist",
     "removeComments": true,
     "skipLibCheck": true,
     "sourceMap": true,
     "strict": true,
-    "target": "es5",
+    "target": "ES2015",
+    "paths": {
+      "@broadcaster/*": ["./packages/*/"]
+    }
   },
   "exclude": [
     "node_modules",
-    "**/*.spec.ts"
+    "**/*.spec.ts",
+    "dist"
   ]
 }

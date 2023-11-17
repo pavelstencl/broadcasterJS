@@ -2,6 +2,7 @@
   "name": "broadcaster-monorepo",
   "description": "Cross window state manager based on BroadcastChannel API. Allows to send messages and keep states between browsing contexts (tabs, windows, workers, etc..)",
   "author": "Pavel Stencl",
+  "private": true,
   "scripts": {
     "build": "npm run build --workspaces --if-present",
     "lint": "npm run lint --workspaces --if-present",
