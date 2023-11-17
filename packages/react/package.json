@@ -38,8 +38,10 @@
     "url": "https://github.com/pavelstencl/broadcaster/issues"
   },
   "homepage": "https://github.com/pavelstencl/broadcaster/packages/react-broadcaster#readme",
+  "dependencies": {
+    "@broadcaster/core": "file:../broadcaster"
+  },
   "devDependencies": {
-    "@broadcaster/core": "file:../broadcaster",
     "@testing-library/react": "^14.1.0",
     "@types/react": "^18.2.37",
     "react": "^18.0.0",
