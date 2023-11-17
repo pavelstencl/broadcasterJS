@@ -158,7 +158,7 @@ export class Broadcaster<Payload, State> {
      *
      * @param payload message payload
      */
-    public postMessage(payload: Payload): void {
+    public postMessage = (payload: Payload): void => {
         if (!this.isBroadcasterActive("postMessage")) {
             return;
         }
@@ -169,7 +169,7 @@ export class Broadcaster<Payload, State> {
             from: this.id,
             payload: applyMiddleware ? (applyMiddleware(payload) as Payload) : payload,
         });
-    }
+    };
 
     /**
      * Creates a new state message
@@ -240,9 +240,9 @@ export class Broadcaster<Payload, State> {
      * ```
      * @param newState data to override or a method with current state as an attribute
      */
-    public setState(
+    public setState = (
         newState: State | ((current: State) => State)
-    ): void {
+    ): void => {
         if (typeof newState === "function") {
             this.currentState = (newState as ((current: State) => State))(this.currentState);
         }
@@ -251,7 +251,7 @@ export class Broadcaster<Payload, State> {
         }
 
         this.bridge.setState(this.prepareStateMessage(StateMessageType.UPDATED));
-    }
+    };
 
     /**
      * Subscribes to a public message channel.
