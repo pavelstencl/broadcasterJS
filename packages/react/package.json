@@ -1,6 +1,6 @@
 {
   "name": "@broadcaster/react",
-  "version": "0.0.1",
+  "version": "1.0.0",
   "description": "React implementation of Broadcaster package. Extension of a Broadcast Channel API. Allows to send messages to multiple windows (tabs, workers, iframes,...) and detect opened windows.",
   "main": "dist/cjs/index.js",
   "module": "dist/esm/index.js",
