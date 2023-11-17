@@ -19,7 +19,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/pavelstencl/broadcaster.git"
+    "url": "git+https://github.com/pavelstencl/broadcasterJS.git"
   },
   "keywords": [
     "broadcast",
@@ -40,9 +40,9 @@
   "author": "Pavel Stencl",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/pavelstencl/broadcaster/issues"
+    "url": "https://github.com/pavelstencl/broadcasterJS/issues"
   },
-  "homepage": "https://github.com/pavelstencl/broadcaster/packages/react-broadcaster#readme",
+  "homepage": "https://github.com/pavelstencl/broadcasterJS/tree/main/packages/react#readme",
   "devDependencies": {
     "@testing-library/react": "^14.1.0",
     "@types/react": "^18.2.37",
@@ -52,5 +52,6 @@
   "peerDependencies": {
     "react": "^18.2.0",
     "react-dom": "^18.2.0"
-  }
+  },
+  "gitHead": "f83fee75a9ea5dec1d2c0b93aab87d12d5778a85"
 }
