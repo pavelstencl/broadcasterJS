@@ -1,10 +1,20 @@
-# Broadcaster: Cross Window State Manager
+# Broadcaster: Cross Window Serverless State Manager
 
-Enables seamless communication across various browsing contexts, including tabs, windows, and workers. This system not only preserves the state of each instance but also shares the current state with remote counterparts.
+[![npm version](https://badge.fury.io/js/@broadcaster%2Freact.svg)](https://badge.fury.io/js/@broadcaster%2Freact)
 
-## Broadcaster Monorepo
+Small package for managing communication between different
+[browsing contexts](https://developer.mozilla.org/en-US/docs/Glossary/Browsing_context), like tabs, windows, iFrames, workers, etc..
 
-Look for Broadcaster and other related packages in [packages](https://github.com/pavelstencl/broadcaster/tree/main/packages) folder.
+This package not only preserves the state of each instance but also shares the current states with remote counterparts.
+Under the hood, it utilizes the [BroadcastChannel API](https://developer.mozilla.org/en-US/docs/Web/API/Broadcast_Channel_API),
+yet it can be effortlessly replaced with any alternative communication strategy.
+
+## Broadcaster Monorepo Structure
+
+ * **[@broadcaster/core](https://github.com/pavelstencl/broadcasterJS/tree/main/packages/core):** Main package with all business logic in it.
+ * **[@broadcaster/react](https://github.com/pavelstencl/broadcasterJS/tree/main/packages/react):** React port of @broadcaster with utility hooks.
+
+Look for other packages in [packages](https://github.com/pavelstencl/broadcaster/tree/main/packages) folder.
 
 ## Key features
 
