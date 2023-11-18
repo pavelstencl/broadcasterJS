@@ -11,7 +11,7 @@ export type UseBroadcasterReturnType<Payload, State> = {
     /**
      * Broadcaster instance id
      */
-    id: string;
+    id: Readonly<string>;
     /**
      * Latest message
      */
