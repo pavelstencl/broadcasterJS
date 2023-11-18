@@ -41,5 +41,8 @@
     "url": "https://github.com/pavelstencl/broadcaster/issues"
   },
   "homepage": "https://github.com/pavelstencl/broadcasterJS/tree/main/packages/core#readme",
-  "gitHead": "f83fee75a9ea5dec1d2c0b93aab87d12d5778a85"
+  "gitHead": "f83fee75a9ea5dec1d2c0b93aab87d12d5778a85",
+  "dependencies": {
+    "utility-types": "^3.10.0"
+  }
 }
