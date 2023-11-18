@@ -53,5 +53,8 @@
     "react": "^18.2.0",
     "react-dom": "^18.2.0"
   },
-  "gitHead": "f83fee75a9ea5dec1d2c0b93aab87d12d5778a85"
+  "gitHead": "f83fee75a9ea5dec1d2c0b93aab87d12d5778a85",
+  "dependencies": {
+    "@broadcaster/core": "^1.0.1"
+  }
 }
