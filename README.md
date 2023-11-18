@@ -1,7 +1,5 @@
 # Broadcaster: Cross Window Serverless State Manager
 
-[![npm version](https://badge.fury.io/js/@broadcaster%2Freact.svg)](https://badge.fury.io/js/@broadcaster%2Freact)
-
 Small package for managing communication between different
 [browsing contexts](https://developer.mozilla.org/en-US/docs/Glossary/Browsing_context), like tabs, windows, iFrames, workers, etc..
 
