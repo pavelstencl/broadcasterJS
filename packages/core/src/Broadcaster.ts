@@ -1,5 +1,3 @@
-import { DeepReadonly } from "utility-types";
-
 import { BroadcasterSubscription } from "./subscription/Subscription";
 import { StateMessageType } from "./types";
 import { BroadcastChannelBridge } from "./bridges/BroadcastChannelBridge";
@@ -57,12 +55,12 @@ export class Broadcaster<Payload, State> {
      * Keeps stored all subscriptions
      */
     private subscriptionManager = new BroadcasterSubscription<[
-        DeepReadonly<BroadcasterMessage<Payload>> | null,
+        BroadcasterMessage<Payload> | null,
         BroadcasterError | null,
     ]>();
 
     private state = new BroadcasterSubscription<[
-        DeepReadonly<BroadcasterInstanceDescriptor<State>[]>,
+        BroadcasterInstanceDescriptor<State>[],
     ]>(true);
 
     public constructor(private settings: BroadcasterSettings<Payload, State>) {
@@ -218,7 +216,7 @@ export class Broadcaster<Payload, State> {
                     payload: applyMiddleware ?
                         applyMiddleware(payload) :
                         payload
-                } as DeepReadonly<BroadcasterMessage<Payload>>,
+                },
                 null,
             );
         }
@@ -331,6 +329,6 @@ export class Broadcaster<Payload, State> {
             return;
         }
 
-        this.state.next([...this.broadcasters] as DeepReadonly<BroadcasterInstanceDescriptor<State>[]>);
+        this.state.next([...this.broadcasters]);
     };
 }

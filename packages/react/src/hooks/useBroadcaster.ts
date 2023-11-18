@@ -1,7 +1,6 @@
 import { useLayoutEffect, useState } from "react";
 
 import { Broadcaster, BroadcasterInstanceDescriptor, BroadcasterMessage } from "@broadcaster/core";
-import { DeepReadonly } from "utility-types";
 
 export type UseBroadcasterReturnType<Payload, State> = {
     /**
@@ -15,7 +14,7 @@ export type UseBroadcasterReturnType<Payload, State> = {
     /**
      * Latest message
      */
-    message: DeepReadonly<BroadcasterMessage<Payload>> | null;
+    message: BroadcasterMessage<Payload> | null;
     /**
      * Sends a message to all broadcasters
      */
@@ -27,7 +26,7 @@ export type UseBroadcasterReturnType<Payload, State> = {
     /**
      * Gets all states from all broadcaster instances with some metadata in it
      */
-    state: DeepReadonly<BroadcasterInstanceDescriptor<State>[]>;
+    state: BroadcasterInstanceDescriptor<State>[];
 }
 
 /**
@@ -39,9 +38,9 @@ export type UseBroadcasterReturnType<Payload, State> = {
 export const createUseBroadcaster = <Payload, State>(
     broadcaster: Broadcaster<Payload, State>,
 ) => (): UseBroadcasterReturnType<Payload, State> => {
-    const [message, setMessage] = useState<DeepReadonly<BroadcasterMessage<Payload>> | null>(null);
-    const [state, setState] = useState<DeepReadonly<BroadcasterInstanceDescriptor<State>[]>>(
-        [] as unknown as DeepReadonly<BroadcasterInstanceDescriptor<State>[]>
+    const [message, setMessage] = useState<BroadcasterMessage<Payload> | null>(null);
+    const [state, setState] = useState<BroadcasterInstanceDescriptor<State>[]>(
+        [] as unknown as BroadcasterInstanceDescriptor<State>[]
     );
 
     useLayoutEffect(() => {
