@@ -29,8 +29,7 @@ const createInstances = <Payload, State extends Record<string, unknown>>(
 
 describe("Broadcaster messaging tests", () => {
     const result = jest.fn<undefined, [
-        BroadcasterMessage<unknown> | null,
-        null | BroadcasterError,
+        BroadcasterMessage<unknown>,
     ]>(() => undefined);
 
     afterEach(() => {
@@ -86,13 +85,13 @@ describe("Broadcaster messaging tests", () => {
         const [instance1, instance2] = createInstances(2);
         const message = "Hello World";
         MockBridge.throwError = new BroadcasterContentTypeMismatchError();
+        const errorResult = result as unknown as jest.Mock<undefined, [BroadcasterError], unknown>;
 
-        instance1.subscribe.message(result);
+        instance1.subscribe.errors(errorResult);
         instance2.postMessage({data: message});
 
-        expect(result.mock.calls).toHaveLength(1);
-        expect(result.mock.calls[0][0]).toBe(null);
-        expect(result.mock.calls[0][1]?.errorType).toBe(MockBridge.throwError.errorType);
+        expect(errorResult.mock.calls).toHaveLength(1);
+        expect(errorResult.mock.calls[0][0]?.errorType).toBe(MockBridge.throwError.errorType);
 
         MockBridge.throwError = undefined;
     });

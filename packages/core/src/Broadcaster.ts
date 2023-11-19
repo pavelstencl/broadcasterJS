@@ -55,13 +55,16 @@ export class Broadcaster<Payload, Metadata> {
      * Keeps stored all subscriptions
      */
     private messageSubscriptionManager = new BroadcasterSubscription<[
-        BroadcasterMessage<Payload> | null,
-        BroadcasterError | null,
+        BroadcasterMessage<Payload>,
     ]>();
 
     private broadcastersSubscriptionManager = new BroadcasterSubscription<[
         BroadcasterState<Metadata>[],
     ]>(true);
+
+    private broadcastersErrorManager = new BroadcasterSubscription<[
+        BroadcasterError
+    ]>();
 
     public constructor(private settings: BroadcasterSettings<Payload, Metadata>) {
         const { bridge, channel, metadata} = this.settings;
@@ -73,7 +76,7 @@ export class Broadcaster<Payload, Metadata> {
         this.bridge.subscribe({
             messages: this.pushMessage,
             state: this.updateState,
-            onError: this.pushError,
+            onError: this.broadcastersErrorManager.next,
         });
 
         this.bridge.connect(this.channel);
@@ -136,11 +139,6 @@ export class Broadcaster<Payload, Metadata> {
     }
 
     /**
-     * Notify all registered subscribers
-     */
-    private notify = this.messageSubscriptionManager.next;
-
-    /**
      * Send a message to all instances of Broadcaster across browsing context.
      *
      * @param payload data payload
@@ -190,15 +188,6 @@ export class Broadcaster<Payload, Metadata> {
     }
 
     /**
-     * Push new error to all subscribers
-     *
-     * @param error
-     */
-    private pushError = (error: BroadcasterError): void => {
-        this.notify(null, error);
-    };
-
-    /**
      * Push new message to all subscribers
      *
      * @param param0 raw bridge message
@@ -209,7 +198,7 @@ export class Broadcaster<Payload, Metadata> {
         // filter all messages, where message owner is current instance
         if (from !== this.id) {
             const applyMiddleware = this.settings.middlewares?.after;
-            this.notify(
+            this.messageSubscriptionManager.next(
                 {
                     ...data,
                     // change message if middleware exist
@@ -217,7 +206,6 @@ export class Broadcaster<Payload, Metadata> {
                         applyMiddleware(payload) :
                         payload
                 },
-                null,
             );
         }
     };
@@ -269,6 +257,7 @@ export class Broadcaster<Payload, Metadata> {
     public subscribe = {
         message: this.messageSubscriptionManager.subscribe,
         broadcasters: this.broadcastersSubscriptionManager.subscribe,
+        errors: this.broadcastersErrorManager.subscribe,
     };
 
     /**
@@ -296,6 +285,7 @@ export class Broadcaster<Payload, Metadata> {
          * Unsubscribes from Broadcasters List Channel
          */
         broadcasters: this.broadcastersSubscriptionManager.unsubscribe,
+        errors: this.broadcastersErrorManager.unsubscribe,
     };
 
     private updateState = (data: BroadcasterStateMessage<Metadata>): void => {
