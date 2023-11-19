@@ -1,9 +1,16 @@
+import { Broadcaster } from "@broadcaster/core";
 import { UseBroadcasterReturnType } from "./hooks/useBroadcaster";
 
 export type ReactBroadcasterFactoryReturnType<
     Payload,
     Metadata,
 > = {
+    /**
+     * Instance of Broadcaster from broadcaster/core package.
+     *
+     * @see @link https://github.com/pavelstencl/broadcasterJS/tree/main/packages/core
+     */
+    broadcaster: Broadcaster<Payload, Metadata>;
     /**
      * **Broadcaster Hook**
      *

@@ -69,6 +69,7 @@ export const createBroadcaster = <Payload, Metadata>(
     const useBroadcaster = createUseBroadcaster(broadcaster);
 
     return {
+        broadcaster,
         useBroadcaster,
     };
 };
