@@ -5,7 +5,7 @@ describe("Subscription Manager tests", () => {
     const result = jest.fn<undefined, [unknown, null | Error]>(() => undefined);
     const message = "Hello World";
 
-    beforeEach(() => {
+    afterEach(() => {
         subscriptionManager?.close();
         result.mockReset();
     });

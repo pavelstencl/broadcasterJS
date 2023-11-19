@@ -33,7 +33,7 @@ describe("Broadcaster messaging tests", () => {
         null | BroadcasterError,
     ]>(() => undefined);
 
-    beforeEach(() => {
+    afterEach(() => {
         MockBridge.reset();
         result.mockReset();
     });
@@ -166,7 +166,7 @@ describe("Broadcaster state management tests", () => {
         BroadcasterInstanceDescriptor<Record<string, unknown>>[],
     ]>(() => undefined);
 
-    beforeEach(() => {
+    afterEach(() => {
         MockBridge.reset();
         result.mockReset();
     });
@@ -230,7 +230,7 @@ describe("Broadcaster lifecycle events", () => {
         Broadcaster<unknown, Record<string, unknown>>,
     ]>(() => undefined);
 
-    beforeEach(() => {
+    afterEach(() => {
         MockBridge.reset();
         event.mockReset();
     });
