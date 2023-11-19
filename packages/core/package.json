@@ -1,7 +1,7 @@
 {
   "name": "@broadcaster/core",
   "version": "1.0.3",
-  "description": "Cross window state manager based on BroadcastChannel API. Allows to send messages and keep states between browsing contexts (tabs, windows, workers, etc..)",
+  "description": "Cross window serverless messaging system based on BroadcastChannel API. Allows to send messages and keep track about instances between browsing contexts (tabs, windows, workers, etc..)",
   "main": "dist/cjs/index.js",
   "module": "dist/esm/index.js",
   "files": [
@@ -22,18 +22,22 @@
     "url": "git+https://github.com/pavelstencl/broadcasterJS.git"
   },
   "keywords": [
+    "message",
     "broadcast",
     "channel",
     "BroadcastChannel",
     "share",
-    "state",
+    "metadata",
     "tabs",
     "windows",
     "browser",
     "workers",
     "connect",
     "connection",
-    "cross"
+    "cross",
+    "communicate",
+    "browsing",
+    "context"
   ],
   "author": "Pavel Stencl",
   "license": "MIT",

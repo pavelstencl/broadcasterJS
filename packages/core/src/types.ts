@@ -6,20 +6,27 @@ import { BroadcasterBridge } from "./bridges/Bridge";
  *
  * @public
  */
-export type BroadcasterInstanceDescriptor<State> = {
+export type BroadcasterState<Metadata> = {
     /**
      * Indicates time when a broadcaster was created
      */
-    connectedAt: number;
+    createdAt: number;
     /**
      * Broadcaster ID
      */
     id: string;
     /**
-     * Broadcasters current state
+     * Broadcaster instance metadata
      */
-    state: State;
+    metadata: Metadata;
 };
+
+/**
+ * Basic info about remote broadcaster instance
+ *
+ * @public
+ */
+export type BroadcasterInstanceDescriptor<Metadata> = BroadcasterState<Metadata>;
 
 /**
  * An object representing public message from other broadcaster instance.
@@ -32,11 +39,11 @@ export type BroadcasterMessage<Payload> = {
 };
 
 /**
- * Message received from other broadcaster.
+ * State update message received from another Broadcaster instance.
  *
- * @public
+ * @private
  */
-export type BroadcasterStateMessage<State> = {
+export type BroadcasterStateMessage<Metadata> = {
     /**
      * ID of an message owner.
      */
@@ -44,7 +51,7 @@ export type BroadcasterStateMessage<State> = {
     /**
      * Owners state object.
      */
-    state: BroadcasterInstanceDescriptor<State>;
+    state: BroadcasterState<Metadata>;
     /**
      * Broadcaster ID, which will be used as a message address.
      */
@@ -60,21 +67,24 @@ export type BroadcasterStateMessage<State> = {
  *
  * @public
  */
-export type BroadcasterSettings<Payload, State> = {
+export type BroadcasterSettings<Payload, Metadata> = {
     /**
      * Replaces default BroadcasterBridge. Allows to use communication layer other then
      * BroadcasterChannel API (for example WebSocket layer).
      *
      * @default BroadcastChannelBridge
      */
-    bridge?: BroadcasterBridge<BroadcasterMessage<Payload>, BroadcasterStateMessage<State>>;
+    bridge?: BroadcasterBridge<BroadcasterMessage<Payload>, BroadcasterStateMessage<Metadata>>;
 
     /**
      * Unique channel name, which will be used as a communication key
      */
     channel: string;
 
-    defaultState: State;
+    /**
+     * Initial metadata
+     */
+    metadata: Metadata;
 
     /**
      * Middleware allowing to transform a message
@@ -107,32 +117,16 @@ export type BroadcasterSettings<Payload, State> = {
          * @param broadcaster
          * @returns
          */
-        close: (broadcaster: Broadcaster<Payload, State>) => void;
+        close: (broadcaster: Broadcaster<Payload, Metadata>) => void;
         /**
          * Called right after broadcaster initialization
          *
          * @param broadcaster
          * @returns
          */
-        init: (broadcaster: Broadcaster<Payload, State>) => void;
+        init: (broadcaster: Broadcaster<Payload, Metadata>) => void;
     }>;
 }
-
-/**
- * Type definition of Broadcaster Generic type
- *
- * @public
- */
-export type GenericBroadcasterAttributes = {
-    /**
-     * Type definition of data payload
-     */
-    payload: unknown;
-    /**
-     * Broadcaster state type definition
-     */
-    state: Record<string, unknown>;
-};
 
 /**
  * Allowed state message types

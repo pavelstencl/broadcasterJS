@@ -1,5 +1,6 @@
 
 import { BroadcasterMessage, BroadcasterStateMessage } from "../types";
+import { BroadcasterError } from "../utils/Errors";
 import { BroadcastChannelBridge } from "./BroadcastChannelBridge";
 
 /**
@@ -64,8 +65,8 @@ describe("BroadcastChannel Bridge tests", () => {
                 expect("Called message channel instead of state channel").toBe(message);
                 done();
             },
-            state: ({state: {state}}) => {
-                expect(state).toBe(message);
+            state: ({state: {metadata}}) => {
+                expect(metadata).toBe(message);
                 done();
             },
             onError() {
@@ -79,9 +80,31 @@ describe("BroadcastChannel Bridge tests", () => {
             type: 0,
             state: {
                 id: "1",
-                connectedAt: Date.now(),
-                state: message,
+                createdAt: Date.now(),
+                metadata: message,
             },
         });
+    });
+
+    it("throws an error because of invalid data type", (done) => {
+        const [instance1] = createInstance(1);
+
+        instance1.subscribe({
+            messages: () => {
+                expect("Called message channel instead of state channel").toBe("");
+                done();
+            },
+            state: () => {
+                expect("Called state channel instead of messages channel").toBe("");
+                done();
+            },
+            onError: (error) => {
+                expect(error).toBeInstanceOf(BroadcasterError);
+                done();
+            },
+        });
+
+        instance1.postMessage(Symbol("INVALID MESSAGE") as unknown as BroadcasterMessage<string>);
+        instance1.destroy();
     });
 });

@@ -2,7 +2,7 @@ import { MockBridge } from "@broadcaster/testing-tools";
 
 import { Broadcaster } from "./Broadcaster";
 import { BroadcasterContentTypeMismatchError, BroadcasterError } from "./utils/Errors";
-import { BroadcasterMessage, BroadcasterSettings, BroadcasterInstanceDescriptor } from "./types";
+import { BroadcasterInstanceDescriptor, BroadcasterMessage, BroadcasterSettings } from "./types";
 
 // CONFIG ---------------------------------
 
@@ -18,7 +18,7 @@ const createInstances = <Payload, State extends Record<string, unknown>>(
             // use testing bridge instead of BroadcastChannelBridge
             bridge: new MockBridge(),
             channel: CHANNEL,
-            defaultState: {
+            metadata: {
                 instanceID: i + 1,
             } as unknown as State,
             ...settings,
@@ -29,8 +29,7 @@ const createInstances = <Payload, State extends Record<string, unknown>>(
 
 describe("Broadcaster messaging tests", () => {
     const result = jest.fn<undefined, [
-        BroadcasterMessage<unknown> | null,
-        null | BroadcasterError,
+        BroadcasterMessage<unknown>,
     ]>(() => undefined);
 
     afterEach(() => {
@@ -49,7 +48,7 @@ describe("Broadcaster messaging tests", () => {
         expect(result.mock.calls[0][0]?.payload).toStrictEqual(message);
     });
 
-    it("unsubscribes from broadcaster", () => {
+    it("unsubscribes from message channel", () => {
         const message = {message: "Hello World"};
         const [instance1, instance2] = createInstances(2);
 
@@ -86,13 +85,13 @@ describe("Broadcaster messaging tests", () => {
         const [instance1, instance2] = createInstances(2);
         const message = "Hello World";
         MockBridge.throwError = new BroadcasterContentTypeMismatchError();
+        const errorResult = result as unknown as jest.Mock<undefined, [BroadcasterError], unknown>;
 
-        instance1.subscribe.message(result);
+        instance1.subscribe.errors(errorResult);
         instance2.postMessage({data: message});
 
-        expect(result.mock.calls).toHaveLength(1);
-        expect(result.mock.calls[0][0]).toBe(null);
-        expect(result.mock.calls[0][1]?.errorType).toBe(MockBridge.throwError.errorType);
+        expect(errorResult.mock.calls).toHaveLength(1);
+        expect(errorResult.mock.calls[0][0]?.errorType).toBe(MockBridge.throwError.errorType);
 
         MockBridge.throwError = undefined;
     });
@@ -161,7 +160,11 @@ describe("Broadcaster messaging tests", () => {
     });
 });
 
-describe("Broadcaster state management tests", () => {
+/**
+ * Broadcaster keeps record about all opened instances.
+ * This set of test validates, that all state changes synchronizes.
+ */
+describe("Broadcaster instances states tests", () => {
     const result = jest.fn<undefined, [
         BroadcasterInstanceDescriptor<Record<string, unknown>>[],
     ]>(() => undefined);
@@ -174,19 +177,20 @@ describe("Broadcaster state management tests", () => {
     it("connects two instances and syncs their state data", () => {
         const [instance1, instance2] = createInstances<unknown, Record<string, unknown>>(2);
 
-        instance1.subscribe.state(result);
-        instance2.subscribe.state(result);
+        instance1.subscribe.broadcasters(result);
+        instance2.subscribe.broadcasters(result);
 
         expect(result.mock.calls.length).toBe(2);
         expect(result.mock.calls[0][0].length).toBe(2);
         expect(result.mock.calls[1][0].length).toBe(2);
-        expect(result.mock.calls[1][0]).toStrictEqual(result.mock.calls[0][0]);
+        // we have to revert one array, because order will be opposite to each other
+        expect(result.mock.calls[1][0]).toStrictEqual(result.mock.calls[0][0].reverse());
     });
 
     it("synchronizes state, when new broadcaster connects", () => {
         const [instance1] = createInstances<unknown, Record<string, unknown>>(2);
 
-        instance1.subscribe.state(result);
+        instance1.subscribe.broadcasters(result);
 
         expect(result.mock.calls[0][0].length).toBe(2);
 
@@ -197,7 +201,7 @@ describe("Broadcaster state management tests", () => {
     it("removes broadcaster instance and notifies others", () => {
         const [instance1, instance2] = createInstances<unknown, Record<string, unknown>>(2);
 
-        instance1.subscribe.state(result);
+        instance1.subscribe.broadcasters(result);
 
         expect(result.mock.calls[0][0].length).toBe(2);
 
@@ -206,22 +210,30 @@ describe("Broadcaster state management tests", () => {
         expect(result.mock.calls[1][0][0].id).toBe(instance1.id);
     });
 
-    it("updates broadcaster state and notifies other about change", () => {
+    it("updates broadcasters metadata and notifies other about the change", () => {
         const [instance1, instance2] = createInstances<unknown, Record<string, unknown>>(2);
-        const newState = {
+        const metadata = {
             name: "John Doe"
         };
 
-        instance1.subscribe.state(result);
+        instance1.subscribe.broadcasters(result);
 
-        instance2.setState(newState);
+        instance2.updateMetadata(metadata);
 
         const dataResult = result.mock.calls[1][0];
 
         expect(dataResult.length).toStrictEqual(2);
         expect(dataResult.find(
-            (broadcaster) => broadcaster.id === instance2.id)?.state
-        ).toStrictEqual(newState);
+            (broadcaster) => broadcaster.id === instance2.id)?.metadata
+        ).toStrictEqual(metadata);
+    });
+
+    it("finds a broadcaster based on its id or returns null", () => {
+        const [instance1, instance2] = createInstances<unknown, Record<string, unknown>>(2);
+
+        expect(instance2.findOwner(instance1.id)?.id).toBe(instance1.id);
+
+        expect(instance2.findOwner("non-existing-id")).toBe(null);
     });
 });
 

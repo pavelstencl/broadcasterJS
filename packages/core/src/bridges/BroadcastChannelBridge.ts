@@ -1,6 +1,7 @@
 import { BroadcasterBridge } from "./Bridge";
-import { BroadcasterContentTypeMismatchError } from "../utils/Errors";
+import { BroadcasterContentTypeMismatchError, BroadcasterError } from "../utils/Errors";
 import { BroadcasterMessage, BroadcasterStateMessage } from "../types";
+import { transformIntoBroadcasterError } from "../utils/transformIntoBroadcasterError";
 
 enum MessageTypes {
     MESSAGE,
@@ -35,8 +36,8 @@ type SerializedPrivateMessage<M> = SerializedMessage<M, MessageTypes.STATE>;
  */
 export class BroadcastChannelBridge<
     Payload,
-    State,
-> extends BroadcasterBridge<Payload, State> {
+    Metadata,
+> extends BroadcasterBridge<Payload, Metadata> {
     /**
      * Instance of BroadcastChannel API.
      */
@@ -61,6 +62,19 @@ export class BroadcastChannelBridge<
             "message",
             this.extractMessageAndPush,
         );
+        this.messageChannel.addEventListener(
+            "messageerror",
+            (event) => {
+                this.pushErrorMessage(
+                    new BroadcasterError(
+                        "BROADCAST_CHANNEL_DESERIALIZE_ERROR",
+                        `Broadcast channel cannot deserialize incoming message: \n
+                        Data Type: ${typeof event.data} 
+                        `
+                    ),
+                );
+            }
+        );
     }
 
     protected disconnect(): void {
@@ -76,7 +90,7 @@ export class BroadcastChannelBridge<
      */
     private extractMessageAndPush = (
         event: MessageEvent<
-        SerializedPublicMessage<BroadcasterMessage<Payload>> | SerializedPrivateMessage<BroadcasterStateMessage<State>>
+        SerializedPublicMessage<BroadcasterMessage<Payload>> | SerializedPrivateMessage<BroadcasterStateMessage<Metadata>>
         >
     ): void => {
         const data = event.data;
@@ -89,6 +103,23 @@ export class BroadcastChannelBridge<
         }
         else {
             this.pushErrorMessage(new BroadcasterContentTypeMismatchError(data));
+        }
+    };
+
+    /**
+     * Wraps action to try catch, and in case of an error,
+     * it will transform it to BroadcastError and push it to subscribers
+     *
+     * @param action callback action, which will be called inside try scope
+     */
+    private guardPostMessageErrors = (
+        action: () => void,
+    ): void => {
+        try {
+            action();
+        }
+        catch (error) {
+            this.pushErrorMessage(transformIntoBroadcasterError("BROADCAST_CHANNEL_POST_MESSAGE_ERROR", error));
         }
     };
 
@@ -132,7 +163,7 @@ export class BroadcastChannelBridge<
      * @param data
      * @returns
      */
-    private isStateChangeMessage(data: unknown): data is SerializedPrivateMessage<State> {
+    private isStateChangeMessage(data: unknown): data is SerializedPrivateMessage<Metadata> {
         return this.isMessage(data) && data.type === MessageTypes.STATE;
     }
 
@@ -147,7 +178,7 @@ export class BroadcastChannelBridge<
             type: MessageTypes.MESSAGE
         };
 
-        this.messageChannel.postMessage(message);
+        this.guardPostMessageErrors(() => this.messageChannel.postMessage(message));
     }
 
     /**
@@ -155,12 +186,12 @@ export class BroadcastChannelBridge<
      *
      * @param payload
      */
-    public setState(payload: State): void {
-        const message:SerializedPrivateMessage<State> = {
+    public setState(payload: Metadata): void {
+        const message:SerializedPrivateMessage<Metadata> = {
             payload,
             type: MessageTypes.STATE
         };
 
-        this.messageChannel.postMessage(message);
+        this.guardPostMessageErrors(() => this.messageChannel.postMessage(message));
     }
 }

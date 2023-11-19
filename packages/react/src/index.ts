@@ -13,10 +13,12 @@ import { createUseBroadcaster } from "./hooks/useBroadcaster";
  *
  * @example```tsx
  * // init file
- * export const { useBroadcaster } = createBroadcaster({
+ *
+ * // returns useBroadcaster hook and Broadcaster instance as well
+ * export const { useBroadcaster, broadcaster} = createBroadcaster({
+ *     // Broadcaster settings from broadcaster/core package
  *     ....settings,
  * });
- *
  *
  * // in react component file:
  * import { useBroadcaster } from "./path-to-init-file"
@@ -29,16 +31,21 @@ import { createUseBroadcaster } from "./hooks/useBroadcaster";
  * ```
  *
  * @param settings Broadcaster settings
+ *
+ * @typeParam Payload message shape
+ * @typeParam Metadata metadata object shape
+ *
  * @see{@link BroadcasterSettings}
+ *
  * @returns broadcaster hooks
  */
-export const createBroadcaster = <Payload, State>(
-    settings: BroadcasterSettings<Payload, State>,
-): ReactBroadcasterFactoryReturnType<Payload, State> => {
-    let broadcaster:Broadcaster<Payload, State> | undefined = undefined;
+export const createBroadcaster = <Payload, Metadata>(
+    settings: BroadcasterSettings<Payload, Metadata>,
+): ReactBroadcasterFactoryReturnType<Payload, Metadata> => {
+    let broadcaster:Broadcaster<Payload, Metadata> | undefined = undefined;
 
     /**
-     * Destroys Broadcasters connection with note to other instances\
+     * Destroys Broadcasters connection with note to other instances
      *
      * @param event
      * @returns
@@ -53,7 +60,7 @@ export const createBroadcaster = <Payload, State>(
     };
 
     // register browser based event listeners
-    broadcaster = new Broadcaster<Payload, State>({
+    broadcaster = new Broadcaster<Payload, Metadata>({
         ...settings,
         on: {
             init:(broadcasterInstance): void => {
@@ -70,8 +77,7 @@ export const createBroadcaster = <Payload, State>(
     const useBroadcaster = createUseBroadcaster(broadcaster);
 
     return {
+        broadcaster,
         useBroadcaster,
     };
 };
-
-export * from "@broadcaster/core";
