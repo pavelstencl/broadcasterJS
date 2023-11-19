@@ -13,7 +13,10 @@ import { createUseBroadcaster } from "./hooks/useBroadcaster";
  *
  * @example```tsx
  * // init file
- * export const { useBroadcaster } = createBroadcaster({
+ *
+ * // returns useBroadcaster hook and Broadcaster instance as well
+ * export const { useBroadcaster, broadcaster} = createBroadcaster({
+ *     // Broadcaster settings from broadcaster/core package
  *     ....settings,
  * });
  *
@@ -28,7 +31,12 @@ import { createUseBroadcaster } from "./hooks/useBroadcaster";
  * ```
  *
  * @param settings Broadcaster settings
+ *
+ * @typeParam Payload message shape
+ * @typeParam Metadata metadata object shape
+ *
  * @see{@link BroadcasterSettings}
+ *
  * @returns broadcaster hooks
  */
 export const createBroadcaster = <Payload, Metadata>(

@@ -22,11 +22,12 @@
     "url": "git+https://github.com/pavelstencl/broadcasterJS.git"
   },
   "keywords": [
+    "message",
     "broadcast",
     "channel",
     "BroadcastChannel",
     "share",
-    "state",
+    "metadata",
     "tabs",
     "windows",
     "browser",
@@ -34,6 +35,9 @@
     "connect",
     "connection",
     "cross",
+    "communicate",
+    "browsing",
+    "context",
     "react",
     "hook"
   ],
