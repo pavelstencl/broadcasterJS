@@ -1,5 +1,5 @@
 import { BroadcasterSubscription } from "./subscription/Subscription";
-import { StateMessageType } from "./types";
+import { BroadcasterInstanceDescriptor, StateMessageType } from "./types";
 import { BroadcastChannelBridge } from "./bridges/BroadcastChannelBridge";
 import { generateId } from "./utils/generateId";
 
@@ -8,7 +8,7 @@ import { BroadcasterError } from "./utils/Errors";
 import {
     BroadcasterMessage,
     BroadcasterSettings,
-    BroadcasterInstanceDescriptor,
+    BroadcasterState,
     BroadcasterStateMessage,
 } from "./types";
 
@@ -21,16 +21,16 @@ import {
  * remote counterparts.
  * ____
  */
-export class Broadcaster<Payload, State> {
+export class Broadcaster<Payload, Metadata> {
     /**
      * All active Broadcaster instances
      */
-    private broadcasters: BroadcasterInstanceDescriptor<State>[] = [];
+    private broadcasters: BroadcasterInstanceDescriptor<Metadata>[] = [];
 
     /**
      * Instance of a communication bridge (BroadcasterChannel, WebSockets, etc..)
      */
-    private bridge: BroadcasterBridge<BroadcasterMessage<Payload>, BroadcasterStateMessage<State>>;
+    private bridge: BroadcasterBridge<BroadcasterMessage<Payload>, BroadcasterStateMessage<Metadata>>;
 
     public readonly createdAt = Date.now();
 
@@ -49,26 +49,26 @@ export class Broadcaster<Payload, State> {
      */
     public readonly id = generateId();
 
-    private currentState: State;
+    private metadata: Metadata;
 
     /**
      * Keeps stored all subscriptions
      */
-    private subscriptionManager = new BroadcasterSubscription<[
+    private messageSubscriptionManager = new BroadcasterSubscription<[
         BroadcasterMessage<Payload> | null,
         BroadcasterError | null,
     ]>();
 
-    private state = new BroadcasterSubscription<[
-        BroadcasterInstanceDescriptor<State>[],
+    private broadcastersSubscriptionManager = new BroadcasterSubscription<[
+        BroadcasterState<Metadata>[],
     ]>(true);
 
-    public constructor(private settings: BroadcasterSettings<Payload, State>) {
-        const { bridge, channel, defaultState} = this.settings;
+    public constructor(private settings: BroadcasterSettings<Payload, Metadata>) {
+        const { bridge, channel, metadata} = this.settings;
 
         this.channel = channel;
         this.bridge = bridge || new BroadcastChannelBridge();
-        this.currentState = defaultState;
+        this.metadata = metadata;
 
         this.bridge.subscribe({
             messages: this.pushMessage,
@@ -89,13 +89,13 @@ export class Broadcaster<Payload, State> {
             return;
         }
 
-        this.settings.on?.close?.(this as unknown as Broadcaster<Payload, State>);
+        this.settings.on?.close?.(this as unknown as Broadcaster<Payload, Metadata>);
 
         this.bridge.setState(this.prepareStateMessage(StateMessageType.DISCONNECTED));
 
-        this.subscriptionManager.close();
+        this.messageSubscriptionManager.close();
         this.bridge.destroy();
-        this.state.close();
+        this.broadcastersSubscriptionManager.close();
 
         this.closed = true;
     }
@@ -124,7 +124,7 @@ export class Broadcaster<Payload, State> {
     }
 
     private init(): void {
-        this.settings.on?.init?.(this as unknown as Broadcaster<Payload, State>);
+        this.settings.on?.init?.(this);
         this.bridge.setState(this.prepareStateMessage(StateMessageType.CONNECTED));
     }
 
@@ -138,7 +138,7 @@ export class Broadcaster<Payload, State> {
     /**
      * Notify all registered subscribers
      */
-    private notify = this.subscriptionManager.next;
+    private notify = this.messageSubscriptionManager.next;
 
     /**
      * Send a message to all instances of Broadcaster across browsing context.
@@ -176,15 +176,15 @@ export class Broadcaster<Payload, State> {
      * @param to message receiver id
      * @returns
      */
-    private prepareStateMessage(type: StateMessageType, to?: string): BroadcasterStateMessage<State> {
+    private prepareStateMessage(type: StateMessageType, to?: string): BroadcasterStateMessage<Metadata> {
         return {
             type: type,
             from: this.id,
             to: to,
             state: {
-                connectedAt: this.createdAt,
+                createdAt: this.createdAt,
                 id: this.id,
-                state: this.currentState,
+                metadata: this.metadata,
             }
         };
     }
@@ -223,29 +223,27 @@ export class Broadcaster<Payload, State> {
     };
 
     /**
-     * Changes broadcasters state.
-     * All broadcaster instances will be notified about the change.
-     *
+     * Updates Broadcaster instance metadata and notify other instances about the change.
      * ____
      *
      * @example```ts
-     * // override state
-     * broadcasterInstance.setState({name: "John"});
-     * // update state
-     * broadcasterInstance.setState((current) => ({...current, lastName: "Doe"}));
+     * // override metadata
+     * broadcasterInstance.updateMetadata({name: "John"});
+     * // update metadata
+     * broadcasterInstance.updateMetadata((current) => ({...current, lastName: "Doe"}));
      *
-     * // all broadcasters will receive new state
+     * // all broadcasters will receive new state with updated metadata
      * ```
-     * @param newState data to override or a method with current state as an attribute
+     * @param newMetadata data to override or a method with current state as an attribute
      */
-    public setState = (
-        newState: State | ((current: State) => State)
+    public updateMetadata = (
+        newMetadata: Metadata | ((current: Metadata) => Metadata)
     ): void => {
-        if (typeof newState === "function") {
-            this.currentState = (newState as ((current: State) => State))(this.currentState);
+        if (typeof newMetadata === "function") {
+            this.metadata = (newMetadata as ((current: Metadata) => Metadata))(this.metadata);
         }
         else {
-            this.currentState = newState;
+            this.metadata = newMetadata;
         }
 
         this.bridge.setState(this.prepareStateMessage(StateMessageType.UPDATED));
@@ -269,8 +267,8 @@ export class Broadcaster<Payload, State> {
      * @return subscription object
      */
     public subscribe = {
-        message: this.subscriptionManager.subscribe,
-        state: this.state.subscribe,
+        message: this.messageSubscriptionManager.subscribe,
+        broadcasters: this.broadcastersSubscriptionManager.subscribe,
     };
 
     /**
@@ -280,11 +278,11 @@ export class Broadcaster<Payload, State> {
      * const callback = (message: string) => console.log(message);
      *
      * broadcaster.subscribe.message(callback);
-     * broadcaster.subscribe.state(callback);
+     * broadcaster.subscribe.broadcasters(callback);
      *
      * //...later
      * broadcaster.unsubscribe.message(callback);
-     * broadcaster.unsubscribe.state(callback);
+     * broadcaster.unsubscribe.broadcasters(callback);
      * ```
      *
      * @param callback same method, which was used for subscription
@@ -293,14 +291,14 @@ export class Broadcaster<Payload, State> {
         /**
          * Unsubscribes from Message Channel
          */
-        message: this.subscriptionManager.unsubscribe,
+        message: this.messageSubscriptionManager.unsubscribe,
         /**
-         * Unsubscribes from Broadcaster State Channel
+         * Unsubscribes from Broadcasters List Channel
          */
-        state: this.state.unsubscribe,
+        broadcasters: this.broadcastersSubscriptionManager.unsubscribe,
     };
 
-    private updateState = (data: BroadcasterStateMessage<State>): void => {
+    private updateState = (data: BroadcasterStateMessage<Metadata>): void => {
         if (data.to && data.to !== this.id) {
             return;
         }
@@ -329,6 +327,6 @@ export class Broadcaster<Payload, State> {
             return;
         }
 
-        this.state.next([...this.broadcasters]);
+        this.broadcastersSubscriptionManager.next([...this.broadcasters]);
     };
 }

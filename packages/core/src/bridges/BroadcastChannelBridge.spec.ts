@@ -65,8 +65,8 @@ describe("BroadcastChannel Bridge tests", () => {
                 expect("Called message channel instead of state channel").toBe(message);
                 done();
             },
-            state: ({state: {state}}) => {
-                expect(state).toBe(message);
+            state: ({state: {metadata}}) => {
+                expect(metadata).toBe(message);
                 done();
             },
             onError() {
@@ -80,8 +80,8 @@ describe("BroadcastChannel Bridge tests", () => {
             type: 0,
             state: {
                 id: "1",
-                connectedAt: Date.now(),
-                state: message,
+                createdAt: Date.now(),
+                metadata: message,
             },
         });
     });

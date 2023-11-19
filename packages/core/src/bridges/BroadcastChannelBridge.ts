@@ -36,8 +36,8 @@ type SerializedPrivateMessage<M> = SerializedMessage<M, MessageTypes.STATE>;
  */
 export class BroadcastChannelBridge<
     Payload,
-    State,
-> extends BroadcasterBridge<Payload, State> {
+    Metadata,
+> extends BroadcasterBridge<Payload, Metadata> {
     /**
      * Instance of BroadcastChannel API.
      */
@@ -90,7 +90,7 @@ export class BroadcastChannelBridge<
      */
     private extractMessageAndPush = (
         event: MessageEvent<
-        SerializedPublicMessage<BroadcasterMessage<Payload>> | SerializedPrivateMessage<BroadcasterStateMessage<State>>
+        SerializedPublicMessage<BroadcasterMessage<Payload>> | SerializedPrivateMessage<BroadcasterStateMessage<Metadata>>
         >
     ): void => {
         const data = event.data;
@@ -163,7 +163,7 @@ export class BroadcastChannelBridge<
      * @param data
      * @returns
      */
-    private isStateChangeMessage(data: unknown): data is SerializedPrivateMessage<State> {
+    private isStateChangeMessage(data: unknown): data is SerializedPrivateMessage<Metadata> {
         return this.isMessage(data) && data.type === MessageTypes.STATE;
     }
 
@@ -186,8 +186,8 @@ export class BroadcastChannelBridge<
      *
      * @param payload
      */
-    public setState(payload: State): void {
-        const message:SerializedPrivateMessage<State> = {
+    public setState(payload: Metadata): void {
+        const message:SerializedPrivateMessage<Metadata> = {
             payload,
             type: MessageTypes.STATE
         };
