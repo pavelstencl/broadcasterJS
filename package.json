@@ -8,6 +8,10 @@
     "lint": "lerna run lint",
     "test": "lerna run test"
   },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/pavelstencl/broadcasterJS.git"
+  },
   "keywords": [
     "broadcast",
     "channel",
@@ -36,6 +40,7 @@
     "eslint-plugin-typescript-sort-keys": "^3.1.0",
     "jest-environment-jsdom": "^29.7.0",
     "lerna": "^7.4.2",
+    "lerna-changelog": "^2.2.0",
     "rimraf": "^5.0.5",
     "rollup": "^4.4.1",
     "rollup-plugin-dts": "^6.1.0",
@@ -43,5 +48,12 @@
     "ts-jest": "^29.1.1",
     "ts-node": "^10.9.1",
     "typescript": "^5.2.2"
+  },
+  "changelog": {
+    "labels": {
+      "feat": "New Feature",
+      "fix": "Bug Fix",
+      "refactor": "Change"
+    }
   }
 }
