@@ -104,6 +104,16 @@ export class Broadcaster<Payload, Metadata> {
     }
 
     /**
+     * Find Broadcaster instance based on its ID.
+     *
+     * @param ownerId Broadcaster instance ID
+     * @returns Broadcaster instance which id matches ownerId attribute
+     */
+    public findOwner = (ownerId: string): BroadcasterInstanceDescriptor<Metadata> | null => {
+        return this.broadcasters.find((instance) => instance.id === ownerId) || null;
+    };
+
+    /**
      * Detects whether Broadcaster method can be triggered or not
      *
      * @param action

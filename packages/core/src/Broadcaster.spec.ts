@@ -226,6 +226,14 @@ describe("Broadcaster instances states tests", () => {
             (broadcaster) => broadcaster.id === instance2.id)?.metadata
         ).toStrictEqual(metadata);
     });
+
+    it("finds a broadcaster based on its id or returns null", () => {
+        const [instance1, instance2] = createInstances<unknown, Record<string, unknown>>(2);
+
+        expect(instance2.findOwner(instance1.id)?.id).toBe(instance1.id);
+
+        expect(instance2.findOwner("non-existing-id")).toBe(null);
+    });
 });
 
 describe("Broadcaster lifecycle events", () => {
