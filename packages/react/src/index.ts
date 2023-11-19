@@ -73,5 +73,3 @@ export const createBroadcaster = <Payload, State>(
         useBroadcaster,
     };
 };
-
-export * from "@broadcaster/core";
