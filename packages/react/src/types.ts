@@ -2,13 +2,13 @@ import { UseBroadcasterReturnType } from "./hooks/useBroadcaster";
 
 export type ReactBroadcasterFactoryReturnType<
     Payload,
-    State,
+    Metadata,
 > = {
     /**
      * **Broadcaster Hook**
      *
      * Allows to communicate with other Broadcaster instances using provided
-     * Bridge. This hooks allows to read and push messages or state.
+     * Bridge. This hooks allows to read and push messages and get broadcasters state.
      *
      * _____
      *
@@ -31,7 +31,7 @@ export type ReactBroadcasterFactoryReturnType<
      *
      * @param settings Broadcaster settings
      * @see{@link BroadcasterSettings}
-     * @returns broadcaster hooks
+     * @returns broadcaster hook
      */
-    useBroadcaster: () => UseBroadcasterReturnType<Payload, State>;
+    useBroadcaster: () => UseBroadcasterReturnType<Payload, Metadata>;
 };

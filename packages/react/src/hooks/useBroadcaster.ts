@@ -2,7 +2,12 @@ import { useLayoutEffect, useState } from "react";
 
 import { Broadcaster, BroadcasterInstanceDescriptor, BroadcasterMessage } from "@broadcaster/core";
 
-export type UseBroadcasterReturnType<Payload, State> = {
+export type UseBroadcasterReturnType<Payload, Metadata> = {
+    /**
+     * Gets info about all broadcasters across browsing context.
+     * Provides basic state and metadata about each instance separately.
+     */
+    broadcasters: BroadcasterInstanceDescriptor<Metadata>[];
     /**
      * Channel name used for communication between broadcasters
      */
@@ -18,15 +23,11 @@ export type UseBroadcasterReturnType<Payload, State> = {
     /**
      * Sends a message to all broadcasters
      */
-    postMessage: Broadcaster<Payload, State>["postMessage"];
+    postMessage: Broadcaster<Payload, Metadata>["postMessage"];
     /**
-     * Sets state of this broadcaster instance and notifies others.
+     * Updates Broadcasters metadata and notifies other instances about the change.
      */
-    setState: Broadcaster<Payload, State>["setState"];
-    /**
-     * Gets all states from all broadcaster instances with some metadata in it
-     */
-    state: BroadcasterInstanceDescriptor<State>[];
+    updateMetadata: Broadcaster<Payload, Metadata>["updateMetadata"];
 }
 
 /**
@@ -35,18 +36,18 @@ export type UseBroadcasterReturnType<Payload, State> = {
  * @param broadcaster
  * @returns
  */
-export const createUseBroadcaster = <Payload, State>(
-    broadcaster: Broadcaster<Payload, State>,
-) => (): UseBroadcasterReturnType<Payload, State> => {
+export const createUseBroadcaster = <Payload, Metadata>(
+    broadcaster: Broadcaster<Payload, Metadata>,
+) => (): UseBroadcasterReturnType<Payload, Metadata> => {
     const [message, setMessage] = useState<BroadcasterMessage<Payload> | null>(null);
-    const [state, setState] = useState<BroadcasterInstanceDescriptor<State>[]>(
-        [] as unknown as BroadcasterInstanceDescriptor<State>[]
+    const [broadcasters, setBroadcasters] = useState<BroadcasterInstanceDescriptor<Metadata>[]>(
+        [] as unknown as BroadcasterInstanceDescriptor<Metadata>[]
     );
 
     useLayoutEffect(() => {
         const subscriptions = [
             broadcaster.subscribe.message(setMessage),
-            broadcaster.subscribe.state(setState),
+            broadcaster.subscribe.broadcasters(setBroadcasters),
         ];
 
         return (): void => {
@@ -56,10 +57,10 @@ export const createUseBroadcaster = <Payload, State>(
 
     return {
         id: broadcaster.id,
-        state,
+        broadcasters: broadcasters,
         message,
         channel: broadcaster.channel,
-        setState: broadcaster.setState,
+        updateMetadata: broadcaster.updateMetadata,
         postMessage: broadcaster.postMessage,
     };
 };

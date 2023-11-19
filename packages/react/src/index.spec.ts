@@ -17,7 +17,7 @@ const createInstances = (
         return createBroadcaster({
             channel:  channelName,
             bridge: new MockBridge() as unknown as BroadcasterBridge<BroadcasterMessage<unknown>, BroadcasterStateMessage<unknown>>,
-            defaultState: {}
+            metadata: {},
         });
     })
 );
@@ -47,9 +47,9 @@ describe("createBroadcaster tests", () => {
         broadcaster2.unmount();
     });
 
-    it("propagates state change to all instances", () => {
+    it("propagates metadata change to all instances", () => {
         const [instance1, instance2] = createInstances(2);
-        const newState = {
+        const newMetadata = {
             name: "John",
             lastname: "Doe",
         };
@@ -58,7 +58,7 @@ describe("createBroadcaster tests", () => {
         const broadcaster2 = renderHook(() => instance2.useBroadcaster());
 
         // send a message
-        act(() => broadcaster1.result.current.setState(newState));
+        act(() => broadcaster1.result.current.updateMetadata(newMetadata));
 
         /**
          * Find broadcaster1 state in other instance
@@ -68,14 +68,14 @@ describe("createBroadcaster tests", () => {
          */
         const getNewState = (
             broadcaster: RenderHookResult<UseBroadcasterReturnType<unknown, Record<string, unknown>>, unknown>,
-        ): UseBroadcasterReturnType<unknown, Record<string, unknown>>["state"][0] | undefined  => {
-            return broadcaster.result.current.state.find((state) => state.id === broadcaster1.result.current.id);
+        ): UseBroadcasterReturnType<unknown, Record<string, unknown>>["broadcasters"][0] | undefined  => {
+            return broadcaster.result.current.broadcasters.find((state) => state.id === broadcaster1.result.current.id);
         };
 
         // owner receives new state as well
-        expect(getNewState(broadcaster1)?.state).toStrictEqual(newState);
+        expect(getNewState(broadcaster1)?.metadata).toStrictEqual(newMetadata);
         // receive message by second instance
-        expect(getNewState(broadcaster2)?.state).toStrictEqual(newState);
+        expect(getNewState(broadcaster2)?.metadata).toStrictEqual(newMetadata);
 
         broadcaster1.unmount();
         broadcaster2.unmount();

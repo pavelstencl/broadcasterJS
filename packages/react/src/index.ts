@@ -32,13 +32,13 @@ import { createUseBroadcaster } from "./hooks/useBroadcaster";
  * @see{@link BroadcasterSettings}
  * @returns broadcaster hooks
  */
-export const createBroadcaster = <Payload, State>(
-    settings: BroadcasterSettings<Payload, State>,
-): ReactBroadcasterFactoryReturnType<Payload, State> => {
-    let broadcaster:Broadcaster<Payload, State> | undefined = undefined;
+export const createBroadcaster = <Payload, Metadata>(
+    settings: BroadcasterSettings<Payload, Metadata>,
+): ReactBroadcasterFactoryReturnType<Payload, Metadata> => {
+    let broadcaster:Broadcaster<Payload, Metadata> | undefined = undefined;
 
     /**
-     * Destroys Broadcasters connection with note to other instances\
+     * Destroys Broadcasters connection with note to other instances
      *
      * @param event
      * @returns
@@ -53,7 +53,7 @@ export const createBroadcaster = <Payload, State>(
     };
 
     // register browser based event listeners
-    broadcaster = new Broadcaster<Payload, State>({
+    broadcaster = new Broadcaster<Payload, Metadata>({
         ...settings,
         on: {
             init:(broadcasterInstance): void => {
