@@ -140,7 +140,10 @@ export class Broadcaster<Payload, Metadata> {
 
     private init(): void {
         this.settings.on?.init?.(this);
-        this.bridge.setState(this.prepareStateMessage(StateMessageType.CONNECTED));
+        const message = this.prepareStateMessage(StateMessageType.CONNECTED);
+
+        this.updateState(message, true);
+        this.bridge.setState(message);
     }
 
     /**
@@ -246,7 +249,12 @@ export class Broadcaster<Payload, Metadata> {
             this.metadata = newMetadata;
         }
 
-        this.bridge.setState(this.prepareStateMessage(StateMessageType.UPDATED));
+        const newState = this.prepareStateMessage(StateMessageType.UPDATED);
+
+        // update Broadcasters state
+        this.updateState(newState, true);
+        // notify others
+        this.bridge.setState(newState);
     };
 
     /**
@@ -300,8 +308,8 @@ export class Broadcaster<Payload, Metadata> {
         errors: this.broadcastersErrorManager.unsubscribe,
     };
 
-    private updateState = (data: BroadcasterStateMessage<Metadata>): void => {
-        if (data.to && data.to !== this.id) {
+    private updateState = (data: BroadcasterStateMessage<Metadata>, localUpdate = false): void => {
+        if (!localUpdate && (data.to && data.to !== this.id || data.from === this.id)) {
             return;
         }
 
@@ -311,10 +319,12 @@ export class Broadcaster<Payload, Metadata> {
                 data.state,
             ];
 
-            this.bridge.setState(this.prepareStateMessage(
-                StateMessageType.UPDATED,
-                data.from,
-            ));
+            if (!localUpdate) {
+                this.bridge.setState(this.prepareStateMessage(
+                    StateMessageType.UPDATED,
+                    data.from,
+                ));
+            }
         }
         else if (data.type === StateMessageType.UPDATED) {
             this.broadcasters = [

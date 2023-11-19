@@ -183,7 +183,8 @@ describe("Broadcaster instances states tests", () => {
         expect(result.mock.calls.length).toBe(2);
         expect(result.mock.calls[0][0].length).toBe(2);
         expect(result.mock.calls[1][0].length).toBe(2);
-        expect(result.mock.calls[1][0]).toStrictEqual(result.mock.calls[0][0]);
+        // we have to revert one array, because order will be opposite to each other
+        expect(result.mock.calls[1][0]).toStrictEqual(result.mock.calls[0][0].reverse());
     });
 
     it("synchronizes state, when new broadcaster connects", () => {
