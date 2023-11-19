@@ -81,6 +81,9 @@ export type BroadcasterSettings<Payload, Metadata> = {
      */
     channel: string;
 
+    /**
+     * Initial metadata
+     */
     metadata: Metadata;
 
     /**

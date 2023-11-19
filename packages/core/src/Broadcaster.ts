@@ -13,25 +13,31 @@ import {
 } from "./types";
 
 /**
- * **Broadcaster: Cross Window State Manager**
+ * **Broadcaster: Cross Window Serverless Messaging System**
  *
  * Enables seamless communication across various browsing contexts,
  * including tabs, windows, and workers. This system not only preserves
  * the state of each instance but also shares the current state with
  * remote counterparts.
- * ____
+ *
+ * @public
+ * @typeParam Payload message shape
+ * @typeParam Metadata metadata object shape
  */
 export class Broadcaster<Payload, Metadata> {
     /**
-     * All active Broadcaster instances
+     * List of states of all active broadcasters
      */
     private broadcasters: BroadcasterInstanceDescriptor<Metadata>[] = [];
 
     /**
-     * Instance of a communication bridge (BroadcasterChannel, WebSockets, etc..)
+     * Bridge instance (BroadcasterChannel, WebSockets, etc..)
      */
     private bridge: BroadcasterBridge<BroadcasterMessage<Payload>, BroadcasterStateMessage<Metadata>>;
 
+    /**
+     * When Broadcaster instance was created
+     */
     public readonly createdAt = Date.now();
 
     /**
@@ -49,11 +55,11 @@ export class Broadcaster<Payload, Metadata> {
      */
     public readonly id = generateId();
 
+    /**
+     * Current metadata
+     */
     private metadata: Metadata;
 
-    /**
-     * Keeps stored all subscriptions
-     */
     private messageSubscriptionManager = new BroadcasterSubscription<[
         BroadcasterMessage<Payload>,
     ]>();
@@ -75,7 +81,7 @@ export class Broadcaster<Payload, Metadata> {
 
         this.bridge.subscribe({
             messages: this.pushMessage,
-            state: this.updateState,
+            state: this.updateBroadcasterDescriptor,
             onError: this.broadcastersErrorManager.next,
         });
 
@@ -142,13 +148,10 @@ export class Broadcaster<Payload, Metadata> {
         this.settings.on?.init?.(this);
         const message = this.prepareStateMessage(StateMessageType.CONNECTED);
 
-        this.updateState(message, true);
+        this.updateBroadcasterDescriptor(message, true);
         this.bridge.setState(message);
     }
 
-    /**
-     * Indicates, whether connection was closed or not
-     */
     public get isClosed(): boolean {
         return this.closed;
     }
@@ -205,7 +208,7 @@ export class Broadcaster<Payload, Metadata> {
     /**
      * Push new message to all subscribers
      *
-     * @param param0 raw bridge message
+     * @param data Broadcaster message
      */
     private pushMessage = (data: BroadcasterMessage<Payload>): void => {
         const {payload, from} = data;
@@ -252,13 +255,13 @@ export class Broadcaster<Payload, Metadata> {
         const newState = this.prepareStateMessage(StateMessageType.UPDATED);
 
         // update Broadcasters state
-        this.updateState(newState, true);
+        this.updateBroadcasterDescriptor(newState, true);
         // notify others
         this.bridge.setState(newState);
     };
 
     /**
-     * Subscribes to a public message channel.
+     * Subscribes to selected channel.
      * ____
      * @example```ts
      * const callback = (message: string) => console.log(message);
@@ -270,9 +273,6 @@ export class Broadcaster<Payload, Metadata> {
      * // or
      * broadcaster.unsubscribe.message(callback);
      * ```
-     *
-     * @param callback method, which will be called on every incoming message
-     * @return subscription object
      */
     public subscribe = {
         message: this.messageSubscriptionManager.subscribe,
@@ -281,7 +281,7 @@ export class Broadcaster<Payload, Metadata> {
     };
 
     /**
-     * Unsubscribes from a channel.
+     * Unsubscribes from the selected channel.
      * ____
      * @example```ts
      * const callback = (message: string) => console.log(message);
@@ -293,22 +293,20 @@ export class Broadcaster<Payload, Metadata> {
      * broadcaster.unsubscribe.message(callback);
      * broadcaster.unsubscribe.broadcasters(callback);
      * ```
-     *
-     * @param callback same method, which was used for subscription
      */
     public unsubscribe = {
-        /**
-         * Unsubscribes from Message Channel
-         */
         message: this.messageSubscriptionManager.unsubscribe,
-        /**
-         * Unsubscribes from Broadcasters List Channel
-         */
         broadcasters: this.broadcastersSubscriptionManager.unsubscribe,
         errors: this.broadcastersErrorManager.unsubscribe,
     };
 
-    private updateState = (data: BroadcasterStateMessage<Metadata>, localUpdate = false): void => {
+    /**
+     * Updates broadcasters based on remote message
+     *
+     * @param data remote state message
+     * @param localUpdate if true, it will always update broadcasters list, but never take any other action
+     */
+    private updateBroadcasterDescriptor = (data: BroadcasterStateMessage<Metadata>, localUpdate = false): void => {
         if (!localUpdate && (data.to && data.to !== this.id || data.from === this.id)) {
             return;
         }

@@ -4,6 +4,8 @@ const UNKNOWN_ERROR = "Unknown error occurred in Broadcaster instance. This mean
 
 /**
  * Transforms unknown error into BroadcasterError instance
+ *
+ * @private
  * @param errorType BroadcasterError error type string
  * @param error unknown error
  */
