@@ -1,4 +1,4 @@
-import { BroadcasterBridge, BroadcasterMessage, BroadcasterStateMessage } from "@broadcaster/core";
+import { BroadcasterBridge, BroadcasterError, BroadcasterMessage, BroadcasterStateMessage } from "@broadcaster/core";
 import { MockBridge } from "@broadcaster/testing-tools";
 import { RenderHookResult, act, renderHook } from "@testing-library/react";
 
@@ -76,6 +76,32 @@ describe("createBroadcaster tests", () => {
         expect(getNewState(broadcaster1)?.metadata).toStrictEqual(newMetadata);
         // receive message by second instance
         expect(getNewState(broadcaster2)?.metadata).toStrictEqual(newMetadata);
+
+        broadcaster1.unmount();
+        broadcaster2.unmount();
+    });
+
+    it("receives an error without disconnecting from a broadcast stream", () => {
+        const [instance1, instance2] = createInstances(2);
+        MockBridge.throwError = new BroadcasterError("TEST", "Error");
+        const message = "Message";
+
+        const broadcaster1 = renderHook(() => instance1.useBroadcaster());
+        const broadcaster2 = renderHook(() => instance2.useBroadcaster());
+
+        act(() => broadcaster1.result.current.postMessage("Should not be delivered"));
+
+        // should display MockBridge.throwError message
+        expect(broadcaster2.result.current.error).toBe(MockBridge.throwError);
+        // original message should not be delivered
+        expect(broadcaster2.result.current.message).toBe(null);
+
+        MockBridge.throwError = undefined;
+
+        act(() => broadcaster1.result.current.postMessage(message));
+
+        // message should be delivered
+        expect(broadcaster2.result.current.message?.payload).toBe(message);
 
         broadcaster1.unmount();
         broadcaster2.unmount();

@@ -1,6 +1,6 @@
 import { useLayoutEffect, useState } from "react";
 
-import { Broadcaster, BroadcasterInstanceDescriptor, BroadcasterMessage } from "@broadcaster/core";
+import { Broadcaster, BroadcasterError, BroadcasterInstanceDescriptor, BroadcasterMessage } from "@broadcaster/core";
 
 export type UseBroadcasterReturnType<Payload, Metadata> = {
     /**
@@ -12,6 +12,10 @@ export type UseBroadcasterReturnType<Payload, Metadata> = {
      * Channel name used for communication between broadcasters
      */
     channel:  Readonly<string>;
+    /**
+     * Expected error message from a Broadcaster.
+     */
+    error: BroadcasterError | null;
     /**
      * Broadcaster instance id
      */
@@ -43,11 +47,13 @@ export const createUseBroadcaster = <Payload, Metadata>(
     const [broadcasters, setBroadcasters] = useState<BroadcasterInstanceDescriptor<Metadata>[]>(
         [] as unknown as BroadcasterInstanceDescriptor<Metadata>[]
     );
+    const [error, setError] = useState<BroadcasterError | null>(null);
 
     useLayoutEffect(() => {
         const subscriptions = [
             broadcaster.subscribe.message(setMessage),
             broadcaster.subscribe.broadcasters(setBroadcasters),
+            broadcaster.subscribe.errors(setError),
         ];
 
         return (): void => {
@@ -58,6 +64,7 @@ export const createUseBroadcaster = <Payload, Metadata>(
     return {
         id: broadcaster.id,
         broadcasters: broadcasters,
+        error,
         message,
         channel: broadcaster.channel,
         updateMetadata: broadcaster.updateMetadata,

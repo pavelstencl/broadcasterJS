@@ -17,7 +17,6 @@ import { createUseBroadcaster } from "./hooks/useBroadcaster";
  *     ....settings,
  * });
  *
- *
  * // in react component file:
  * import { useBroadcaster } from "./path-to-init-file"
  *
