@@ -1,6 +1,7 @@
 import { BroadcasterBridge } from "./Bridge";
-import { BroadcasterContentTypeMismatchError } from "../utils/Errors";
+import { BroadcasterContentTypeMismatchError, BroadcasterError } from "../utils/Errors";
 import { BroadcasterMessage, BroadcasterStateMessage } from "../types";
+import { transformIntoBroadcasterError } from "../utils/transformIntoBroadcasterError";
 
 enum MessageTypes {
     MESSAGE,
@@ -61,6 +62,19 @@ export class BroadcastChannelBridge<
             "message",
             this.extractMessageAndPush,
         );
+        this.messageChannel.addEventListener(
+            "messageerror",
+            (event) => {
+                this.pushErrorMessage(
+                    new BroadcasterError(
+                        "BROADCAST_CHANNEL_DESERIALIZE_ERROR",
+                        `Broadcast channel cannot deserialize incoming message: \n
+                        Data Type: ${typeof event.data} 
+                        `
+                    ),
+                );
+            }
+        );
     }
 
     protected disconnect(): void {
@@ -89,6 +103,23 @@ export class BroadcastChannelBridge<
         }
         else {
             this.pushErrorMessage(new BroadcasterContentTypeMismatchError(data));
+        }
+    };
+
+    /**
+     * Wraps action to try catch, and in case of an error,
+     * it will transform it to BroadcastError and push it to subscribers
+     *
+     * @param action callback action, which will be called inside try scope
+     */
+    private guardPostMessageErrors = (
+        action: () => void,
+    ): void => {
+        try {
+            action();
+        }
+        catch (error) {
+            this.pushErrorMessage(transformIntoBroadcasterError("BROADCAST_CHANNEL_POST_MESSAGE_ERROR", error));
         }
     };
 
@@ -147,7 +178,7 @@ export class BroadcastChannelBridge<
             type: MessageTypes.MESSAGE
         };
 
-        this.messageChannel.postMessage(message);
+        this.guardPostMessageErrors(() => this.messageChannel.postMessage(message));
     }
 
     /**
@@ -161,6 +192,6 @@ export class BroadcastChannelBridge<
             type: MessageTypes.STATE
         };
 
-        this.messageChannel.postMessage(message);
+        this.guardPostMessageErrors(() => this.messageChannel.postMessage(message));
     }
 }

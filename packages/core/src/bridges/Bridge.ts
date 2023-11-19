@@ -103,7 +103,7 @@ export abstract class BroadcasterBridge<Payload, State> {
      *
      * @param subscriptions catalogue of all subscriptions
      */
-    public subscribe(subscriptions: typeof this.subscriptions): void {
+    public subscribe(subscriptions: BroadcasterBridge<Payload, State>["subscriptions"]): void {
         this.subscriptions = subscriptions;
     }
 }

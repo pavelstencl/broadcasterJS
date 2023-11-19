@@ -11,11 +11,13 @@ export class BroadcasterError extends Error {
      */
     public readonly errorType: string;
 
-    public constructor(errorType: string, message: string) {
+    public constructor(errorType: string, message: string, stack?: string) {
         super(message);
         this.errorType = errorType;
-        // hide stack, because all errors are expected
-        this.stack = `[BROADCASTER_ERROR:${errorType}]: ${message}`;
+
+        if (stack) {
+            this.stack = `[BROADCASTER_ERROR:${errorType}]: ${message} \n ${stack}`;
+        }
     }
 
     /**
