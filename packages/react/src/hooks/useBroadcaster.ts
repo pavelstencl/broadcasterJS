@@ -4,6 +4,12 @@ import { Broadcaster, BroadcasterError, BroadcasterInstanceDescriptor, Broadcast
 
 export type UseBroadcasterReturnType<Payload, Metadata> = {
     /**
+     * Broadcaster instance, which allows to use low level features.
+     *
+     * @see @link https://github.com/pavelstencl/broadcasterJS/tree/main/packages/core
+     */
+    broadcaster: Broadcaster<Payload, Metadata>;
+    /**
      * Gets info about all broadcasters across browsing context.
      * Provides basic state and metadata about each instance separately.
      */
@@ -62,6 +68,7 @@ export const createUseBroadcaster = <Payload, Metadata>(
     }, []);
 
     return {
+        broadcaster,
         id: broadcaster.id,
         broadcasters: broadcasters,
         error,
