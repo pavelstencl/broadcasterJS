@@ -97,8 +97,10 @@ export class Broadcaster<Payload, Metadata> {
         this.bridge.setState(this.prepareStateMessage(StateMessageType.DISCONNECTED));
 
         this.messageSubscriptionManager.close();
-        this.bridge.destroy();
+        this.broadcastersErrorManager.close();
         this.broadcastersSubscriptionManager.close();
+
+        this.bridge.destroy();
 
         this.closed = true;
     }
