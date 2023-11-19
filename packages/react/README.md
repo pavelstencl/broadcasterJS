@@ -1,32 +1,35 @@
-# React Broadcaster: Cross Window Serverless State Manager
+# React Broadcaster: Cross Window Serverless Messaging System
 
-[![npm version](https://badge.fury.io/js/@broadcaster%2Freact.svg)](https://badge.fury.io/js/@broadcaster%2Freact)
+[![npm version](https://badge.fury.io/js/@broadcaster%2Fcore.svg)](https://badge.fury.io/js/@broadcaster%2Fcore)
 
-Small package for managing communication between different
+Small, package for managing communication between different
 [browsing contexts](https://developer.mozilla.org/en-US/docs/Glossary/Browsing_context), like tabs, windows, iFrames, workers, etc..
+It adds extra layer over BroadcastChannel with unified error management and context awareness. This is an extension of
+[@broadcaster/core](https://github.com/pavelstencl/broadcasterJS/tree/main/packages/core) package.
 
-This package not only preserves the state of each instance but also shares the current states with remote counterparts.
+This package not only sends messages to different browser windows or tabs, but it keeps track about all Broadcaster instances across
+browsing context. In every moment you can see current instance state of any Broadcaster. You can also enhance state with your own metadata.
 Under the hood, it utilizes the [BroadcastChannel API](https://developer.mozilla.org/en-US/docs/Web/API/Broadcast_Channel_API),
-yet it can be effortlessly replaced with any alternative communication strategy.
+yet it can be easily replaced with any alternative communication strategy.
 
 ## Key Features
 
  * 🚌 **BUS between browsing contexts**  
- Allows to share a state and messages between different browsing contexts.
+ Allows to send messages between different browsing contexts and sync Broadcaster instances state.
  * **Serverless**  
  By default, the Broadcaster employs the [BroadcastChannel API](https://developer.mozilla.org/en-US/docs/Web/API/Broadcast_Channel_API)
  as its primary bridge interface. This API enables fundamental communication between different browsing contexts such
  as windows and tabs, eliminating the necessity for a server.
  * 📝 **Context aware**  
-Each instance of the Broadcaster maintains awareness of other instances throughout their lifecycle.
-It retains essential information and state, making this data accessible to every Broadcaster instance
-subscribed to the same channel.
- * 💪 **Accessible on most modern browsers and Node.JS** 
+ Each instance of the Broadcaster maintains awareness of other instances throughout their lifecycle.
+ It retains essential information and metadata, making this data accessible to every Broadcaster instance
+ subscribed to the same channel.
+ * 💪 **Accessible on most modern browsers and Node.JS**  
  In 2023 all main browsers supports BroadcastChannel API (Most recently Safari v 15.4) -
  [see caniuse](https://caniuse.com/?search=BroadcastChannel)
  * ⚙️⚙️⚙️ **Modular**  
-Given Broadcaster's significant dependence on the BroadcastChannel API, users have the flexibility
-to alter the communication protocol by simply replacing the Bridge instance.
+ Given Broadcaster's significant dependence on the BroadcastChannel API, users have the flexibility
+ to alter the communication protocol by simply replacing the Bridge instance.
 
 
 ## Quick-start
@@ -34,10 +37,10 @@ to alter the communication protocol by simply replacing the Bridge instance.
 ### Installation
 
 #### NPM
-```npm i --save @broadcaster/react```
+```npm i --save @broadcaster/core @broadcaster/react```
 
 #### Yarn
-```yarn add @broadcaster/react```
+```yarn add @broadcaster/core @broadcaster/react```
 
 ### Creating Broadcaster Hooks
 
@@ -45,12 +48,12 @@ to alter the communication protocol by simply replacing the Bridge instance.
 import { createBroadcaster } from "@broadcaster/react";
 
 // Custom Broadcaster message shape
-export type BroadcasterMessage = {
+export type Message = {
     message: string;
 };
 
 // Custom Broadcaster state shape
-export type BroadcasterState = {
+export type Metadata = {
     iteration: number;
     currentTime: number;
 };
@@ -59,10 +62,10 @@ export type BroadcasterState = {
  * It is recommended to have only one Broadcaster instance per system per
  * channel. Create Broadcaster instance in a root of you App.
  */
-export const { useBroadcaster } = createBroadcaster<BroadcasterMessage, BroadcasterState>({
+export const { useBroadcaster } = createBroadcaster<Message, Metadata>({
     // All broadcaster with same channel name will be able to communicate.
     channel: "YOUR_CHANNEL_NAME",
-    defaultState: {
+    metadata: {
         iteration: 0,
         currentTime: Date.now();
     },
@@ -74,12 +77,13 @@ export const { useBroadcaster } = createBroadcaster<BroadcasterMessage, Broadcas
 
 ```tsx
 // from previous example
-import { useBroadcaster } from "path/to/hook";
+import { BroadcasterMessage } from "@broadcaster/core";
+import { useBroadcaster, Message } from "path/to/hook";
 import React, { FunctionComponent, useState, useEffect, useCallback } from "react";
 
 const MessageExample: FunctionComponent = () => {
     // store all messages
-    const [messages, setMessage] = useState<(ReturnType<typeof useBroadcaster>["message"])[]>([]);
+    const [messages, setMessage] = useState<BroadcasterMessage<Message>[]>([]);
 
     // useBroadcaster hooks returns latest message only
     const { message: latestMessage, postMessage } = useBroadcaster();
@@ -103,6 +107,7 @@ const MessageExample: FunctionComponent = () => {
 
     return <div className="message-wrapper">
         <div className="messages">
+            {/** Payload is wrapped in message object, which has some metadata about message owner*/}
             { messages.map(({from, payload: { message }}, i) => (
                 <div className="message" key={message + from}>
                     <span>Owner: {from}</span>
@@ -119,12 +124,10 @@ const MessageExample: FunctionComponent = () => {
 };
 ```
 
-### Broadcaster State Management
+### Getting Broadcaster Instance State and Update Metadata
 
-Each Broadcaster has it's inner state, which will be shared with other instances. Each Broadcaster instance
-has list of all Broadcasters state from all instances. It means, that **Broadcaster environment does not
-share one state!** For those purposes it is possible to utilize action based state manager (like Redux) and pass
-actions as Broadcaster messages.
+Each Broadcaster instance has it's inner state, which will be shared with other instances. Each Broadcaster instance
+keeps synced list of all broadcaster instances with their current state and metadata.
 
 ```tsx
 // from Create Broadcaster Hooks
@@ -132,9 +135,9 @@ import { useBroadcaster } from "path/to/hook";
 import React, { FunctionComponent, useEffect } from "react";
 
 const StateExample: FunctionComponent = () => {
-    const { state: broadcastersStatesList, setState } = useBroadcaster();
+    const { broadcasters, updateMetadata } = useBroadcaster();
 
-    // each second update broadcasters state
+    // each second update broadcasters metadata
     useEffect(() => {
         const timer = setInterval(() => {
             setState((currentState) => ({
@@ -147,11 +150,11 @@ const StateExample: FunctionComponent = () => {
     return <div className="broadcaster-instances-info-wrapper">
         <div className="broadcaster-instances-info">
             {/** Iterate through all broadcaster states*/}
-            { broadcastersStatesList.map(({id, connectedAt, state: { iteration, currentTime }}) => (
+            { broadcasters.map(({id, createdAt, metadata: { iteration, currentTime }}) => (
                 <div className="broadcaster-instance" key={id}>
                     <h2>Broadcaster {id}</h2>
                     <ul>
-                        <li>Connection Time: {connectedAt}</li>
+                        <li>Connection Time: {createdAt}</li>
                         <li>State Change Counter: {iteration}</li>
                         <li>Last State Change Time: {currentTime}</li>
                     </ul>
@@ -162,6 +165,6 @@ const StateExample: FunctionComponent = () => {
 };
 ```
 
-## Broadcaster Settings
+## More Information
 
-Settings in createBroadcaster method are the same as for Broadcaster instance. All Broadcaster settings are listed [here](https://github.com/pavelstencl/broadcasterJS/tree/main/packages/core#broadcaster-constructor-settings).
+More information about Broadcasters and its architecture can be found [here](https://github.com/pavelstencl/broadcasterJS/tree/main/packages/core).
