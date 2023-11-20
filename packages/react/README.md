@@ -30,6 +30,9 @@ yet it can be easily replaced with any alternative communication strategy.
  * ⚙️⚙️⚙️ **Modular**  
  Given Broadcaster's significant dependence on the BroadcastChannel API, users have the flexibility
  to alter the communication protocol by simply replacing the Bridge instance.
+ * **Resilient**  
+ Errors identified during the broadcasting phase are transferred into a separate error stream,
+ allowing the channel to remain open for additional incoming messages.
 
 
 ## Quick-start
