@@ -29,6 +29,9 @@ yet it can be easily replaced with any alternative communication strategy.
  * ⚙️⚙️⚙️ **Modular**  
  Given Broadcaster's significant dependence on the BroadcastChannel API, users have the flexibility
  to alter the communication protocol by simply replacing the Bridge instance.
+  * **Resilient**  
+ Errors identified during the broadcasting phase are transferred into a separate error stream,
+ allowing the channel to remain open for additional incoming messages.
 
 
 ## Quick-start
@@ -105,10 +108,6 @@ const messageSubscription = broadcaster.subscribe.message(
         // Message payload
         console.log(message.payload, message.payload.type, message.payload.sentence);
     },
-    // broadcaster error handler
-    (error) => {
-        console.log("Oops", error);
-    },
 );
 
 // later, when we want to unsubscribe
@@ -161,6 +160,24 @@ broadcaster.updateMetadata((currentMetadata) => ({
     your: currentMetadata.your,
     state: true,
 }));
+```
+
+### Error Handling
+
+All errors which are identified during broadcasting phase are transferred into separate error stream, to prevent
+blocking original channel with unexpected result.
+
+```ts
+// from previous example
+import { broadcaster } from "path/to/instance";
+
+// subscribe to a error channel to receive all unexpected errors during broadcasting phase
+const broadcastersSubscription = broadcaster.subscribe.errors(
+    (error) => {
+        // BroadcasterError as an extension of an Error class
+        console.log(error);
+    },
+);
 ```
 
 ## Broadcaster Constructor Settings
