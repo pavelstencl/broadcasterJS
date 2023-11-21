@@ -6,6 +6,8 @@ Small, zero-dependency package for managing communication between different
 [browsing contexts](https://developer.mozilla.org/en-US/docs/Glossary/Browsing_context), like tabs, windows, iFrames, workers, etc..
 It adds extra layer over BroadcastChannel with unified error management and context awareness.
 
+![Broadcaster Example](https://github.com/pavelstencl/broadcasterJS/blob/main/resources/messages.gif?raw=true)
+
 This package not only sends messages to different browser windows or tabs, but it keeps track about all Broadcaster instances across
 browsing context. In every moment you can see current instance state of any Broadcaster. You can also enhance state with your own metadata.
 Under the hood, it utilizes the [BroadcastChannel API](https://developer.mozilla.org/en-US/docs/Web/API/Broadcast_Channel_API),
