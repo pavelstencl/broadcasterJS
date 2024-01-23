@@ -3,7 +3,7 @@
  *
  * @returns
  */
-export const generateId = (): `${string}-${string}-${string}` => {
+export const generateId = (): string => {
     const timestamp = Date.now().toString(16);
     const timestampDerivedRandomNumber = (Date.now() *  Math.random()).toString(16).replace(".", "").slice(2);
     const salt = Math.random().toString(16).slice(2);
