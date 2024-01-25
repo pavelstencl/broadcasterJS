@@ -44,34 +44,9 @@ export const createBroadcaster = <Payload, Metadata>(
 ): ReactBroadcasterFactoryReturnType<Payload, Metadata> => {
     let broadcaster:Broadcaster<Payload, Metadata> | undefined = undefined;
 
-    /**
-     * Destroys Broadcasters connection with note to other instances
-     *
-     * @param event
-     * @returns
-     */
-    const closeBeforeUnload = (event: BeforeUnloadEvent): void => {
-        event.preventDefault();
-        event.stopPropagation();
-
-        broadcaster?.close();
-
-        return undefined;
-    };
-
     // register browser based event listeners
     broadcaster = new Broadcaster<Payload, Metadata>({
         ...settings,
-        on: {
-            init:(broadcasterInstance): void => {
-                window.addEventListener("beforeunload", closeBeforeUnload);
-                settings.on?.init?.(broadcasterInstance);
-            },
-            close: (broadcasterInstance): void => {
-                window.removeEventListener("beforeunload", closeBeforeUnload);
-                settings.on?.close?.(broadcasterInstance);
-            }
-        }
     });
 
     const useBroadcaster = createUseBroadcaster(broadcaster);
