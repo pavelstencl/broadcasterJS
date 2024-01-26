@@ -8,22 +8,38 @@ import { BroadcasterInstanceDescriptor, BroadcasterMessage, BroadcasterSettings 
 
 const CHANNEL = "CHANNEL";
 
+let instances:Broadcaster<unknown, unknown>[] = [];
+
 const createInstances = <Payload, State extends Record<string, unknown>>(
     amount: number,
     settings?: Partial<BroadcasterSettings<Payload, State>>
-): Broadcaster<Payload, State>[] => new Array(amount)
-    .fill(0)
-    .map((_, i) => (
-        new Broadcaster<Payload, State>({
+): Broadcaster<Payload, State>[] => {
+    const newInstances = new Array(amount)
+        .fill(0)
+        .map((_, i) => (
+            new Broadcaster<Payload, State>({
             // use testing bridge instead of BroadcastChannelBridge
-            bridge: new MockBridge(),
-            channel: CHANNEL,
-            metadata: {
-                instanceID: i + 1,
-            } as unknown as State,
-            ...settings,
-        })
-    ));
+                bridge: new MockBridge(),
+                channel: CHANNEL,
+                metadata: {
+                    instanceID: instances.length + i + 1,
+                } as unknown as State,
+                ...settings,
+            })
+        )) as Broadcaster<unknown, unknown>[];
+
+    instances = [...instances, ...newInstances];
+
+    return newInstances as Broadcaster<Payload, State>[];
+};
+
+const resetAllInstances = (): void => {
+    instances.forEach((instance) => instance.close(true));
+
+    instances = [];
+};
+
+const timer = jest.useFakeTimers();
 
 // END CONFIG ------------------------------------
 
@@ -35,6 +51,7 @@ describe("Broadcaster messaging tests", () => {
     afterEach(() => {
         MockBridge.reset();
         result.mockReset();
+        resetAllInstances();
     });
 
     it("sends a message", () => {
@@ -172,6 +189,7 @@ describe("Broadcaster instances states tests", () => {
     afterEach(() => {
         MockBridge.reset();
         result.mockReset();
+        resetAllInstances();
     });
 
     it("connects two instances and syncs their state data", () => {
@@ -184,7 +202,11 @@ describe("Broadcaster instances states tests", () => {
         expect(result.mock.calls[0][0].length).toBe(2);
         expect(result.mock.calls[1][0].length).toBe(2);
         // we have to revert one array, because order will be opposite to each other
-        expect(result.mock.calls[1][0]).toStrictEqual(result.mock.calls[0][0].reverse());
+        expect(
+            result.mock.calls[1][0].map(({id}) => id)
+        ).toStrictEqual(
+            result.mock.calls[0][0].map(({id}) => id).reverse()
+        );
     });
 
     it("synchronizes state, when new broadcaster connects", () => {
@@ -242,9 +264,15 @@ describe("Broadcaster lifecycle events", () => {
         Broadcaster<unknown, Record<string, unknown>>,
     ]>(() => undefined);
 
+    const result = jest.fn<undefined, [
+        BroadcasterInstanceDescriptor<Record<string, unknown>>[],
+    ]>(() => undefined);
+
     afterEach(() => {
         MockBridge.reset();
         event.mockReset();
+        result.mockReset();
+        resetAllInstances();
     });
 
     it("triggers init event", () => {
@@ -269,5 +297,47 @@ describe("Broadcaster lifecycle events", () => {
 
         expect(event.mock.calls.length).toBe(1);
         expect(event.mock.calls[0][0]).toBe(instance);
+    });
+
+    it("keeps alive all instances, because of health beacons messages", () => {
+        const [instance1, instance2] = createInstances(2);
+
+        instance1.subscribe.broadcasters(result);
+
+        expect(result.mock.calls[0][0].length).toBe(2);
+
+        timer.advanceTimersByTime(100000);
+
+        expect(result.mock.calls.length).toBe(1);
+        expect(result.mock.calls[0][0].length).toBe(2);
+        expect(instance1.broadcasters.length).toBe(2);
+        expect(instance2.broadcasters.length).toBe(2);
+    });
+
+    it("removes broadcaster reference due to timeout", () => {
+        const [instance1] = createInstances(1);
+        const [instance2] = createInstances(1, {
+            // set beacon higher then garbage collection threshold
+            healthBeaconTimer: 1000,
+            garbageCollectorTimer: 2000,
+            garbageCollectorThresholdTimer: 2000
+        });
+
+        instance1.subscribe.broadcasters(result);
+
+        expect(result.mock.calls.length).toBe(1);
+        expect(result.mock.calls[0][0].length).toBe(2);
+
+        timer.advanceTimersByTime(250);
+
+        expect(result.mock.calls.length).toBe(2);
+        // instance2 is removed from a list
+        expect(result.mock.calls[1][0].length).toBe(1);
+        expect(instance1.broadcasters.length).toBe(1);
+        expect(instance1.broadcasters[0].id).toBe(instance1.id);
+
+        // since instance2 has different timers, it still receives all
+        // messages from instance1
+        expect(instance2.broadcasters.length).toBe(2);
     });
 });
