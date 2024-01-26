@@ -27,10 +27,7 @@ export type BroadcasterState<Metadata> = {
  * @public
  */
 export type BroadcasterInstanceDescriptor<Metadata> = BroadcasterState<Metadata> & {
-    /**
-     * Broadcaster is inactive for specified amount of time
-     */
-    disabled?: boolean;
+    inactive?: boolean;
     lastUpdate: number;
 };
 

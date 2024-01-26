@@ -37,7 +37,7 @@ export class Broadcaster<Payload, Metadata> {
     private _broadcasters: BroadcasterInstanceDescriptor<Metadata>[] = [];
 
     public get broadcasters(): Readonly<Broadcaster<Payload, Metadata>["_broadcasters"]> {
-        return this._broadcasters;
+        return this._broadcasters.filter(broadcasters => !broadcasters.inactive);
     }
 
     /**
@@ -103,6 +103,13 @@ export class Broadcaster<Payload, Metadata> {
     }
 
     /**
+     * Propagates changes in metadata descriptors to all subscribers
+     */
+    private broadcastersUpdated(): void {
+        this.broadcastersSubscriptionManager.next([...this._broadcasters.filter(b => !b.inactive)]);
+    }
+
+    /**
      * Cancel a connection to a channel and notify other Broadcasters about it.
      *
      * @param silent skips multi call detection
@@ -135,19 +142,29 @@ export class Broadcaster<Payload, Metadata> {
             return;
         }
 
-        const broadcastersArrayLength = this._broadcasters.length;
+        let changed:boolean = false;
         const currentTime = Date.now();
         const {
             garbageCollectorThresholdTimer = DEFAULT_REMOVE_AFTER_TIME,
         } = this.settings;
 
-        this._broadcasters = this._broadcasters.filter((broadcaster) => (
-            broadcaster.id === this.id ||
-            currentTime - broadcaster.lastUpdate <= garbageCollectorThresholdTimer
-        ));
+        this._broadcasters = this._broadcasters.map((broadcaster) => {
+            if (
+                broadcaster.inactive ||
+                broadcaster.id === this.id ||
+                (currentTime - broadcaster.lastUpdate) <= garbageCollectorThresholdTimer
+            ) {
+                return broadcaster;
+            }
+            else {
+                changed = true;
 
-        if (this._broadcasters.length !== broadcastersArrayLength) {
-            this.broadcastersSubscriptionManager.next([...this._broadcasters]);
+                return {...broadcaster, inactive: true};
+            }
+        });
+
+        if (changed) {
+            this.broadcastersUpdated();
         }
     };
 
@@ -386,12 +403,16 @@ export class Broadcaster<Payload, Metadata> {
             return;
         }
 
+        let change = false;
+
         if (data.type === StateMessageType.CONNECTED) {
             if (data.state) {
                 this._broadcasters = [
                     ...this._broadcasters,
                     this.stateToDescriptor(data.state)
                 ];
+
+                change = true;
             }
 
             if (!localUpdate) {
@@ -407,31 +428,36 @@ export class Broadcaster<Payload, Metadata> {
                     ...this._broadcasters.filter((broadcaster) => broadcaster.id !== data.from),
                     this.stateToDescriptor(data.state),
                 ];
+
+                change = true;
             }
         }
         else if (data.type === StateMessageType.DISCONNECTED) {
             this._broadcasters = this._broadcasters.filter((broadcaster) => broadcaster.id !== data.from);
+
+            change = true;
         }
         // periodical message sent by Broadcaster, indicates healthy broadcaster instance
         else if (data.type === StateMessageType.HEALTH_BEACON) {
             this._broadcasters = this._broadcasters.map((broadcaster) => {
                 if (broadcaster.id === data.from) {
+                    if (broadcaster.inactive === true) {
+                        change = true;
+                    }
+
                     return {
                         ...broadcaster,
                         lastUpdate: Date.now(),
+                        inactive: false,
                     };
                 }
 
                 return broadcaster;
             });
-
-            // do not notify about a change
-            return;
-        }
-        else {
-            return;
         }
 
-        this.broadcastersSubscriptionManager.next([...this._broadcasters]);
+        if (change) {
+            this.broadcastersUpdated();
+        }
     };
 }
