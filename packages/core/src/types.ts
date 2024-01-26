@@ -105,7 +105,7 @@ export type BroadcasterSettings<Payload, Metadata> = {
      * considered terminated and garbage collected.
      *
      * @units ms
-     * @default 200
+     * @default 1500
      */
     garbageCollectorThresholdTimer?: number;
 
@@ -114,7 +114,7 @@ export type BroadcasterSettings<Payload, Metadata> = {
      * and all of those which cross removal threshold will be deleted.
      *
      * @units ms
-     * @default 20
+     * @default 500
      */
     garbageCollectorTimer?: number;
 
@@ -123,7 +123,7 @@ export type BroadcasterSettings<Payload, Metadata> = {
      * sends health status message
      *
      * @units ms
-     * @default 80
+     * @default 500
      */
     healthBeaconTimer?: number;
 

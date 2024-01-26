@@ -350,7 +350,7 @@ describe("Broadcaster lifecycle events", () => {
         expect(result.mock.calls.length).toBe(1);
         expect(result.mock.calls[0][0].length).toBe(2);
 
-        timer.advanceTimersByTime(1000);
+        timer.advanceTimersByTime(100000);
 
         expect(result.mock.calls.length).toBe(2);
         // instance2 is removed from a list
