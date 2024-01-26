@@ -217,8 +217,9 @@ export class Broadcaster<Payload, Metadata> {
      * ```
      *
      * @param payload message payload
+     * @param to a id(s) of receivers
      */
-    public postMessage = (payload: Payload): void => {
+    public postMessage = (payload: Payload, to?: BroadcasterMessage<Payload>["to"]): void => {
         if (!this.isBroadcasterActive("postMessage")) {
             return;
         }
@@ -228,6 +229,7 @@ export class Broadcaster<Payload, Metadata> {
         this.bridge.postMessage({
             from: this.id,
             payload: applyMiddleware ? (applyMiddleware(payload) as Payload) : payload,
+            to,
         });
     };
 
@@ -262,7 +264,14 @@ export class Broadcaster<Payload, Metadata> {
      * @param data Broadcaster message
      */
     private pushMessage = (data: BroadcasterMessage<Payload>): void => {
-        const {payload, from} = data;
+        const {payload, from, to} = data;
+        // normalize data
+        const receiver = to ? Array.isArray(to) ? to : [to] : undefined;
+
+        // scratch received message when it is not issued to this broadcaster
+        if (receiver && !receiver.includes(this.id)) {
+            return;
+        }
 
         // filter all messages, where message owner is current instance
         if (from !== this.id) {
