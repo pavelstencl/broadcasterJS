@@ -36,6 +36,9 @@ yet it can be easily replaced with any alternative communication strategy.
  Errors identified during the broadcasting phase are transferred into a separate error stream,
  allowing the channel to remain open for additional incoming messages.
 
+## Detailed Broadcaster description
+
+More information about Broadcasters and its architecture can be found in [core package](https://github.com/pavelstencl/broadcasterJS/tree/main/packages/core).
 
 ## Quick-start
 
@@ -169,7 +172,3 @@ const StateExample: FunctionComponent = () => {
     </div>
 };
 ```
-
-## More Information
-
-More information about Broadcasters and its architecture can be found [here](https://github.com/pavelstencl/broadcasterJS/tree/main/packages/core).
