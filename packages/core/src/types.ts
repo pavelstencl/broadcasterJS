@@ -42,6 +42,7 @@ export type BroadcasterInstanceDescriptor<Metadata> = BroadcasterState<Metadata>
 export type BroadcasterMessage<Payload> = {
     from: string;
     payload: Payload;
+    to?: string | string[];
 };
 
 /**

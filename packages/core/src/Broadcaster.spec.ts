@@ -175,6 +175,28 @@ describe("Broadcaster messaging tests", () => {
         // return original method
         console.error = originalMethod;
     });
+
+    it("discards a message which is not issued to the instance", () => {
+        const [instance1, instance2] = createInstances(2);
+
+        instance2.subscribe.message(result);
+
+        instance1.postMessage({message: "DISCARD IT"}, "OTHER_ID");
+        instance1.postMessage({message: "DISCARD IT"}, ["OTHER_ID"]);
+
+        expect(result.mock.calls.length).toBe(0);
+    });
+
+    it("receives a message issued directly to the instance", () => {
+        const [instance1, instance2] = createInstances(2);
+
+        instance2.subscribe.message(result);
+
+        instance1.postMessage({message: "Message"}, instance2.id);
+        instance1.postMessage({message: "Message"}, [instance2.id, "OTHER_ID"]);
+
+        expect(result.mock.calls.length).toBe(2);
+    });
 });
 
 /**
