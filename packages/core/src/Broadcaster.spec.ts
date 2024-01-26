@@ -340,9 +340,9 @@ describe("Broadcaster lifecycle events", () => {
         const [instance1] = createInstances(1);
         const [instance2] = createInstances(1, {
             // set beacon higher then garbage collection threshold
-            healthBeaconTimer: 1000,
-            garbageCollectorTimer: 2000,
-            garbageCollectorThresholdTimer: 2000
+            healthBeaconTimer: 1000000000,
+            garbageCollectorTimer: 10000000,
+            garbageCollectorThresholdTimer: 100000000
         });
 
         instance1.subscribe.broadcasters(result);
@@ -350,7 +350,7 @@ describe("Broadcaster lifecycle events", () => {
         expect(result.mock.calls.length).toBe(1);
         expect(result.mock.calls[0][0].length).toBe(2);
 
-        timer.advanceTimersByTime(250);
+        timer.advanceTimersByTime(100000);
 
         expect(result.mock.calls.length).toBe(2);
         // instance2 is removed from a list
