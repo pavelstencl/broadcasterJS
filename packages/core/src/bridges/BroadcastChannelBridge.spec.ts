@@ -65,7 +65,7 @@ describe("BroadcastChannel Bridge tests", () => {
                 expect("Called message channel instead of state channel").toBe(message);
                 done();
             },
-            state: ({state: {metadata}}) => {
+            state: ({state: { metadata } = {}}) => {
                 expect(metadata).toBe(message);
                 done();
             },

@@ -75,14 +75,11 @@ export const broadcaster = new Broadcaster<Message, Metadata>({
         metadata: false,
     },
     on: {
-        // Broadcaster doesn't handle `beforeunload event by default.
-        // We want to notify other instances, that this instance is about
-        // to end.
         init: (broadcasterInstance) => {
-            window.addEventListener("beforeunload", destroyBroadcaster);
+            // called when broadcaster is initialized
         },
         close: (broadcasterInstance) => {
-            window.removeEventListener("beforeunload", destroyBroadcaster);
+            // called when broadcaster is closed
         }
     }
     // For more settings check Broadcaster Constructor Settings section down below
@@ -182,17 +179,53 @@ const broadcastersSubscription = broadcaster.subscribe.errors(
 );
 ```
 
+## Garbage Collector - Window closure detection
+
+Window closure detection is hard. It is in theory possible
+to use `beforeunload` event but it is inconsistent. It can trigger unwanted prompt, the event can be 'hijacked' by other listener, or it can be canceled by user. For this reason we introduced Garbage Collector.
+
+Each broadcaster instance sends periodical health status to others.
+When some instance does not response for specified amount of time,
+it is considered dead and will be garbage collected.
+
+**Garbage Collector performs soft deletion. It means even when instance is removed, it can reappear in a list in case new health status is send later on. In fact Garbage Collector only assumes, that browsing context was closed, even tho it can be blocked by other process.**
+
+It is still possible to use old fashion approach with `beforeunload`,
+but it needs to be implemented manually like this:
+
+```ts
+const broadcaster = new Broadcaster({
+    channel: "YOUR_CHANNEL_NAME",
+    metadata: {
+        your: "your",
+        metadata: false,
+    },
+    on: {
+        init: (broadcasterInstance) => {
+            window.addEventListener("beforeunload", destroyBroadcaster);
+        },
+        close: (broadcasterInstance) => {
+            window.removeEventListener("beforeunload", destroyBroadcaster);
+        }
+    }
+})
+```
+
 ## Broadcaster Constructor Settings
 
 For more detailed info, please see [BroadcasterSettings type](https://github.com/pavelstencl/broadcasterJS/blob/main/packages/core/src/types.ts)
 
-| Property    | Value                                                                                                                    | Required | Default                                                                                                                              | Description                                                                                          |
-|-------------|--------------------------------------------------------------------------------------------------------------------------|----------|--------------------------------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------|
-| bridge      | [BroadcasterBridge instance](https://github.com/pavelstencl/broadcasterJS/blob/main/packages/core/src/bridges/Bridge.ts) | optional | [BroadcastChannelBridge](https://github.com/pavelstencl/broadcasterJS/blob/main/packages/core/src/bridges/BroadcastChannelBridge.ts) | Allows to change communication strategy to a custom one.                                             |
-| channel     | string                                                                                                                   | required | -                                                                                                                                    | All broadcaster with same channel name will be able to communicate.                                  |
-| metadata    | object                                                                                                                   | required | -                                                                                                                                    | Initial metadata object. Will be broadcasted to audience.                                            |
-| middlewares | object                                                                                                                   | optional | -                                                                                                                                    | Set of middlewares, which can modify message before broadcasting and right after receiving a message |
-| on          | object                                                                                                                   | optional | -                                                                                                                                    | Set of lifecycle events.                                                                             |
+| Property                | Value                                                                                                                    | Required | Default                                                                                                                              | Description                                                                                                                  |
+|-------------------------|--------------------------------------------------------------------------------------------------------------------------|----------|--------------------------------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------|
+| bridge                  | [BroadcasterBridge instance](https://github.com/pavelstencl/broadcasterJS/blob/main/packages/core/src/bridges/Bridge.ts) | optional | [BroadcastChannelBridge](https://github.com/pavelstencl/broadcasterJS/blob/main/packages/core/src/bridges/BroadcastChannelBridge.ts) | Allows to change communication strategy to a custom one.                                                                     |
+| channel                 | string                                                                                                                   | required | -                                                                                                                                    | All broadcaster with same channel name will be able to communicate.                                                          |
+| disableGarbageCollector | boolean                                                                                                                  | optional | false                                                                                                                                | disables garbage collector. In that case you need to detect windows closure manually and trigger broadcaster.close() method. |
+garbageCollectorThresholdTimer | number | optional | 200 [ms] | time of inactivity after which broadcaster instance will be considered dead and will be removed |
+| garbageCollectorTimer | number | optional | 20 [ms] | loop time of garbage collector |
+| healthBeaconTimer | number                                                                                                                   | optional | 80 [ms]                                                                                                                              | Sets an interval in which the health status message will be beamed to all broadcasters               |
+| metadata          | object                                                                                                                   | required | -                                                                                                                                    | Initial metadata object. Will be broadcasted to audience.                                            |
+| middlewares       | object                                                                                                                   | optional | -                                                                                                                                    | Set of middlewares, which can modify message before broadcasting and right after receiving a message |
+| on                | object                                                                                                                   | optional | -                                                                                                                                    | Set of lifecycle events.                                                                             |
 
 ## FAQ
 

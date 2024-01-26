@@ -12,6 +12,12 @@ import {
     BroadcasterStateMessage,
 } from "./types";
 
+import {
+    DEFAULT_BEACON_TIMER,
+    DEFAULT_GARBAGE_COLLECTOR_TIMER,
+    DEFAULT_REMOVE_AFTER_TIME,
+} from "./constants";
+
 /**
  * **Broadcaster: Cross Window Serverless Messaging System**
  *
@@ -28,7 +34,11 @@ export class Broadcaster<Payload, Metadata> {
     /**
      * List of states of all active broadcasters
      */
-    private broadcasters: BroadcasterInstanceDescriptor<Metadata>[] = [];
+    private _broadcasters: BroadcasterInstanceDescriptor<Metadata>[] = [];
+
+    public get broadcasters(): Readonly<Broadcaster<Payload, Metadata>["_broadcasters"]> {
+        return this._broadcasters;
+    }
 
     /**
      * Bridge instance (BroadcasterChannel, WebSockets, etc..)
@@ -60,12 +70,14 @@ export class Broadcaster<Payload, Metadata> {
      */
     private metadata: Metadata;
 
+    private intervals: (NodeJS.Timeout | number)[] = [];
+
     private messageSubscriptionManager = new BroadcasterSubscription<[
         BroadcasterMessage<Payload>,
     ]>();
 
     private broadcastersSubscriptionManager = new BroadcasterSubscription<[
-        BroadcasterState<Metadata>[],
+        BroadcasterInstanceDescriptor<Metadata>[],
     ]>(true);
 
     private broadcastersErrorManager = new BroadcasterSubscription<[
@@ -73,7 +85,7 @@ export class Broadcaster<Payload, Metadata> {
     ]>();
 
     public constructor(private settings: BroadcasterSettings<Payload, Metadata>) {
-        const { bridge, channel, metadata} = this.settings;
+        const { bridge, channel, metadata } = this.settings;
 
         this.channel = channel;
         this.bridge = bridge || new BroadcastChannelBridge();
@@ -92,15 +104,18 @@ export class Broadcaster<Payload, Metadata> {
 
     /**
      * Cancel a connection to a channel and notify other Broadcasters about it.
+     *
+     * @param silent skips multi call detection
      */
-    public close(): void {
-        if (!this.isBroadcasterActive("close")) {
+    public close(silent?: boolean): void {
+        if (!silent && !this.isBroadcasterActive("close")) {
             return;
         }
 
         this.settings.on?.close?.(this as unknown as Broadcaster<Payload, Metadata>);
 
-        this.bridge.setState(this.prepareStateMessage(StateMessageType.DISCONNECTED));
+        this.bridge.setState(this.prepareStateMessage(StateMessageType.DISCONNECTED, null, false));
+        this.intervals.map(interval => clearInterval(interval));
 
         this.messageSubscriptionManager.close();
         this.broadcastersErrorManager.close();
@@ -112,13 +127,38 @@ export class Broadcaster<Payload, Metadata> {
     }
 
     /**
+     * Marks as disabled all broadcasters which are inactive for specific amount of time.
+     * Removes those who cross removeAfter threshold.
+     */
+    private collectGarbage = (): void => {
+        if (this.settings.disableGarbageCollector) {
+            return;
+        }
+
+        const broadcastersArrayLength = this._broadcasters.length;
+        const currentTime = Date.now();
+        const {
+            garbageCollectorThresholdTimer = DEFAULT_REMOVE_AFTER_TIME,
+        } = this.settings;
+
+        this._broadcasters = this._broadcasters.filter((broadcaster) => (
+            broadcaster.id === this.id ||
+            currentTime - broadcaster.lastUpdate <= garbageCollectorThresholdTimer
+        ));
+
+        if (this._broadcasters.length !== broadcastersArrayLength) {
+            this.broadcastersSubscriptionManager.next([...this._broadcasters]);
+        }
+    };
+
+    /**
      * Find Broadcaster instance based on its ID.
      *
      * @param ownerId Broadcaster instance ID
      * @returns Broadcaster instance which id matches ownerId attribute
      */
     public findOwner = (ownerId: string): BroadcasterInstanceDescriptor<Metadata> | null => {
-        return this.broadcasters.find((instance) => instance.id === ownerId) || null;
+        return this._broadcasters.find((instance) => instance.id === ownerId) || null;
     };
 
     /**
@@ -150,6 +190,12 @@ export class Broadcaster<Payload, Metadata> {
 
         this.updateBroadcasterDescriptor(message, true);
         this.bridge.setState(message);
+
+        this.intervals = [
+            ...this.intervals,
+            setInterval(this.sendAliveMessage, this.settings.healthBeaconTimer || DEFAULT_BEACON_TIMER),
+            setInterval(this.collectGarbage, this.settings.garbageCollectorTimer || DEFAULT_GARBAGE_COLLECTOR_TIMER),
+        ];
     }
 
     public get isClosed(): boolean {
@@ -190,18 +236,23 @@ export class Broadcaster<Payload, Metadata> {
      *
      * @param type message type
      * @param to message receiver id
+     * @param withoutState
      * @returns
      */
-    private prepareStateMessage(type: StateMessageType, to?: string): BroadcasterStateMessage<Metadata> {
+    private prepareStateMessage(
+        type: StateMessageType,
+        to?: string | null,
+        withoutState?: boolean
+    ): BroadcasterStateMessage<Metadata> {
         return {
             type: type,
             from: this.id,
-            to: to,
-            state: {
+            to: to || undefined,
+            state: !withoutState ? {
                 createdAt: this.createdAt,
                 id: this.id,
                 metadata: this.metadata,
-            }
+            } : undefined,
         };
     }
 
@@ -260,6 +311,14 @@ export class Broadcaster<Payload, Metadata> {
         this.bridge.setState(newState);
     };
 
+    private sendAliveMessage = (): void => {
+        this.bridge.setState(this.prepareStateMessage(
+            StateMessageType.HEALTH_BEACON,
+            null,
+            true,
+        ));
+    };
+
     /**
      * Subscribes to selected channel.
      * ____
@@ -279,6 +338,13 @@ export class Broadcaster<Payload, Metadata> {
         broadcasters: this.broadcastersSubscriptionManager.subscribe,
         errors: this.broadcastersErrorManager.subscribe,
     };
+
+    private stateToDescriptor(state: BroadcasterState<Metadata>): BroadcasterInstanceDescriptor<Metadata> {
+        return {
+            ...state,
+            lastUpdate: Date.now(),
+        };
+    }
 
     /**
      * Unsubscribes from the selected channel.
@@ -312,10 +378,12 @@ export class Broadcaster<Payload, Metadata> {
         }
 
         if (data.type === StateMessageType.CONNECTED) {
-            this.broadcasters = [
-                ...this.broadcasters,
-                data.state,
-            ];
+            if (data.state) {
+                this._broadcasters = [
+                    ...this._broadcasters,
+                    this.stateToDescriptor(data.state)
+                ];
+            }
 
             if (!localUpdate) {
                 this.bridge.setState(this.prepareStateMessage(
@@ -325,18 +393,36 @@ export class Broadcaster<Payload, Metadata> {
             }
         }
         else if (data.type === StateMessageType.UPDATED) {
-            this.broadcasters = [
-                ...this.broadcasters.filter((state) => state.id !== data.state.id),
-                data.state,
-            ];
+            if (data.state) {
+                this._broadcasters = [
+                    ...this._broadcasters.filter((broadcaster) => broadcaster.id !== data.from),
+                    this.stateToDescriptor(data.state),
+                ];
+            }
         }
         else if (data.type === StateMessageType.DISCONNECTED) {
-            this.broadcasters = this.broadcasters.filter((state) => state.id !== data.state.id);
+            this._broadcasters = this._broadcasters.filter((broadcaster) => broadcaster.id !== data.from);
+        }
+        // periodical message sent by Broadcaster, indicates healthy broadcaster instance
+        else if (data.type === StateMessageType.HEALTH_BEACON) {
+            this._broadcasters = this._broadcasters.map((broadcaster) => {
+                if (broadcaster.id === data.from) {
+                    return {
+                        ...broadcaster,
+                        lastUpdate: Date.now(),
+                    };
+                }
+
+                return broadcaster;
+            });
+
+            // do not notify about a change
+            return;
         }
         else {
             return;
         }
 
-        this.broadcastersSubscriptionManager.next([...this.broadcasters]);
+        this.broadcastersSubscriptionManager.next([...this._broadcasters]);
     };
 }
